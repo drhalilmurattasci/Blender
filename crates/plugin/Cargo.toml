@@ -1,0 +1,14 @@
+[package]
+name = "forge3d-plugin"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+description = "Plugin system: dynamic loading, registration, and lifecycle management for Forge3D"
+
+[dependencies]
+forge3d-ui-core = { path = "../ui-core", package = "forge3d-ui-core" }
+forge3d-mesh = { path = "../mesh", package = "forge3d-mesh" }
+forge3d-scene = { path = "../scene", package = "forge3d-scene" }
+thiserror = { workspace = true }
+tracing = { workspace = true }

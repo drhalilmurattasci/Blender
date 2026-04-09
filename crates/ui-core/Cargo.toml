@@ -1,0 +1,16 @@
+[package]
+name = "forge3d-ui-core"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+description = "Core UI framework: widgets, layout, operators, theming, input handling, and painting for Forge3D"
+
+[dependencies]
+forge3d-math = { path = "../math", package = "forge3d-math" }
+forge3d-gpu = { path = "../gpu", package = "forge3d-gpu" }
+forge3d-window = { path = "../window", package = "forge3d-window" }
+forge3d-dna = { path = "../dna", package = "forge3d-dna" }
+thiserror = { workspace = true }
+ahash = { workspace = true }
+smallvec = { workspace = true }

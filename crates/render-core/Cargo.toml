@@ -1,0 +1,10 @@
+[package]
+name = "forge3d-render-core"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+forge3d-math = { path = "../math", package = "forge3d-math" }
+bytemuck = { workspace = true }
+thiserror = { workspace = true }
+tracing = { workspace = true }

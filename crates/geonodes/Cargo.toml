@@ -1,0 +1,16 @@
+[package]
+name = "forge3d-geonodes"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+description = "Geometry nodes: visual node graph, fields, sockets, evaluation engine for Forge3D"
+
+[dependencies]
+forge3d-math = { path = "../math", package = "forge3d-math" }
+forge3d-mesh = { path = "../mesh", package = "forge3d-mesh" }
+forge3d-alloc = { path = "../alloc", package = "forge3d-alloc" }
+rayon = { workspace = true }
+thiserror = { workspace = true }
+smallvec = { workspace = true }
+ahash = { workspace = true }

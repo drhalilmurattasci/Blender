@@ -1,0 +1,13 @@
+[package]
+name = "forge3d-constraints"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+description = "Object and bone constraints for Forge3D: transform limits, tracking, relationships, and more"
+
+[dependencies]
+forge3d-math = { path = "../math", package = "forge3d-math" }
+bitflags = { workspace = true }
+thiserror = { workspace = true }
+serde = { workspace = true }

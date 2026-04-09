@@ -1,0 +1,12 @@
+[package]
+name = "forge3d-alloc"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+description = "Memory allocation primitives for Forge3D: generational arenas, fixed-size pools, and scratch allocators"
+
+[dependencies]
+bumpalo = { workspace = true }
+serde = { workspace = true }
+bytemuck = { workspace = true }

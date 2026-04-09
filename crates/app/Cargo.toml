@@ -1,0 +1,40 @@
+[package]
+name = "forge3d"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+description = "Forge3D application entry point: window creation, scene bootstrap, and main loop orchestration"
+
+[[bin]]
+name = "forge3d"
+path = "src/main.rs"
+
+[dependencies]
+forge3d-math = { path = "../math" }
+forge3d-alloc = { path = "../alloc" }
+forge3d-dna = { path = "../dna" }
+forge3d-mesh = { path = "../mesh" }
+forge3d-mesh-ops = { path = "../mesh-ops" }
+forge3d-modifiers = { path = "../modifiers" }
+forge3d-geonodes = { path = "../geonodes" }
+forge3d-gpu = { path = "../gpu" }
+forge3d-render-core = { path = "../render-core" }
+forge3d-pathtracer = { path = "../pathtracer" }
+forge3d-realtime = { path = "../realtime" }
+forge3d-anim = { path = "../anim" }
+forge3d-drivers = { path = "../drivers" }
+forge3d-constraints = { path = "../constraints" }
+forge3d-armature = { path = "../armature" }
+forge3d-nla = { path = "../nla" }
+forge3d-depsgraph = { path = "../depsgraph" }
+forge3d-window = { path = "../window" }
+forge3d-ui-core = { path = "../ui-core" }
+forge3d-ui-editors = { path = "../ui-editors" }
+forge3d-scene = { path = "../scene" }
+forge3d-io = { path = "../io" }
+forge3d-plugin = { path = "../plugin" }
+
+anyhow = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }

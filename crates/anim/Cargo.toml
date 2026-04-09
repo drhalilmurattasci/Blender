@@ -1,0 +1,13 @@
+[package]
+name = "forge3d-anim"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+description = "Animation data types and evaluation for Forge3D: FCurves, keyframes, actions, and modifiers"
+
+[dependencies]
+forge3d-math = { path = "../math", package = "forge3d-math" }
+serde = { workspace = true }
+thiserror = { workspace = true }
+smallvec = { workspace = true, features = ["serde"] }

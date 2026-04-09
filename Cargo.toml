@@ -1,0 +1,110 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/math",
+    "crates/alloc",
+    "crates/dna",
+    "crates/mesh",
+    "crates/mesh-ops",
+    "crates/modifiers",
+    "crates/geonodes",
+    "crates/gpu",
+    "crates/render-core",
+    "crates/pathtracer",
+    "crates/realtime",
+    "crates/anim",
+    "crates/drivers",
+    "crates/constraints",
+    "crates/armature",
+    "crates/nla",
+    "crates/depsgraph",
+    "crates/window",
+    "crates/ui-core",
+    "crates/ui-editors",
+    "crates/scene",
+    "crates/io",
+    "crates/python",
+    "crates/plugin",
+    "crates/app",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+license = "GPL-3.0-or-later"
+rust-version = "1.85"
+
+[workspace.dependencies]
+# Math
+glam = { version = "0.29", features = ["bytemuck"] }
+bytemuck = { version = "1", features = ["derive"] }
+
+# Memory
+bumpalo = { version = "3", features = ["collections"] }
+
+# Serialization
+rkyv = { version = "0.8", features = ["bytecheck"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+# GPU
+wgpu = "24"
+winit = "0.30"
+raw-window-handle = "0.6"
+
+# Python
+pyo3 = { version = "0.23", features = ["auto-initialize"] }
+
+# Parallelism
+rayon = "1"
+crossbeam = "0.8"
+parking_lot = "0.12"
+
+# Utilities
+tracing = "0.1"
+tracing-subscriber = "0.3"
+thiserror = "2"
+anyhow = "1"
+bitflags = { version = "2", features = ["serde"] }
+smallvec = { version = "1", features = ["union"] }
+indexmap = { version = "2", features = ["serde"] }
+ahash = "0.8"
+num-traits = "0.2"
+
+# Image
+image = "0.25"
+
+# Proc macro
+syn = { version = "2", features = ["full", "extra-traits"] }
+quote = "1"
+proc-macro2 = "1"
+
+# Testing
+criterion = { version = "0.5", features = ["html_reports"] }
+proptest = "1"
+
+# Internal crates
+math = { path = "crates/math" }
+alloc = { path = "crates/alloc", package = "forge3d-alloc" }
+dna = { path = "crates/dna" }
+mesh = { path = "crates/mesh" }
+mesh-ops = { path = "crates/mesh-ops" }
+modifiers = { path = "crates/modifiers" }
+geonodes = { path = "crates/geonodes" }
+gpu = { path = "crates/gpu" }
+render-core = { path = "crates/render-core" }
+pathtracer = { path = "crates/pathtracer" }
+realtime = { path = "crates/realtime" }
+anim = { path = "crates/anim" }
+drivers = { path = "crates/drivers" }
+constraints = { path = "crates/constraints" }
+armature = { path = "crates/armature" }
+nla = { path = "crates/nla" }
+depsgraph = { path = "crates/depsgraph" }
+window = { path = "crates/window" }
+ui-core = { path = "crates/ui-core" }
+ui-editors = { path = "crates/ui-editors" }
+scene = { path = "crates/scene" }
+forge3d-io = { path = "crates/io" }
+python = { path = "crates/python" }
+plugin = { path = "crates/plugin" }

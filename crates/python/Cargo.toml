@@ -1,0 +1,17 @@
+[package]
+name = "forge3d-python"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+description = "Python bindings via PyO3 for Forge3D: mesh, scene, animation, and UI scripting"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+pyo3 = { workspace = true }
+forge3d-math = { path = "../math", package = "forge3d-math" }
+forge3d-mesh = { path = "../mesh", package = "forge3d-mesh" }
+forge3d-scene = { path = "../scene", package = "forge3d-scene" }
+forge3d-anim = { path = "../anim", package = "forge3d-anim" }

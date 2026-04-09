@@ -1,0 +1,12 @@
+[package]
+name = "forge3d-nla"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+description = "Non-Linear Animation (NLA) system for Forge3D: strips, tracks, blending, and evaluation"
+
+[dependencies]
+forge3d-math = { path = "../math", package = "forge3d-math" }
+forge3d-anim = { path = "../anim", package = "forge3d-anim" }
+serde = { workspace = true }

@@ -1,0 +1,16 @@
+[package]
+name = "forge3d-modifiers"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+description = "Modifier stack: generate, deform, modify, and physics modifiers for Forge3D"
+
+[dependencies]
+forge3d-math = { path = "../math", package = "forge3d-math" }
+forge3d-mesh = { path = "../mesh", package = "forge3d-mesh" }
+forge3d-mesh-ops = { path = "../mesh-ops", package = "forge3d-mesh-ops" }
+forge3d-alloc = { path = "../alloc", package = "forge3d-alloc" }
+thiserror = { workspace = true }
+serde = { workspace = true }
+bitflags = { workspace = true }

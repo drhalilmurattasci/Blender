@@ -1,0 +1,13 @@
+[package]
+name = "forge3d-mesh"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+forge3d-math = { path = "../math", package = "forge3d-math" }
+forge3d-alloc = { path = "../alloc", package = "forge3d-alloc" }
+bitflags = { workspace = true }
+smallvec = { workspace = true }
+serde = { workspace = true }
+thiserror = { workspace = true }
+bytemuck = { workspace = true }

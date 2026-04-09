@@ -1,0 +1,2 @@
+<schema::_::<impl Deserialize<'de> for DnaType>::deserialize::__Visitor<'de> as Visitor<'de>>::visit_enum::__Field
+<schema::_::<impl Deserialize<'de> for DnaValue>::deserialize::__Visitor<'de> as Visitor<'de>>::visit_enum::__Field

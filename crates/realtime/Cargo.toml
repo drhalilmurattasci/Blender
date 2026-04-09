@@ -1,0 +1,13 @@
+[package]
+name = "forge3d-realtime"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+forge3d-math = { path = "../math", package = "forge3d-math" }
+forge3d-gpu = { path = "../gpu", package = "forge3d-gpu" }
+forge3d-render-core = { path = "../render-core", package = "forge3d-render-core" }
+wgpu = { workspace = true }
+bytemuck = { workspace = true }
+thiserror = { workspace = true }
+tracing = { workspace = true }

@@ -1,0 +1,19 @@
+[package]
+name = "forge3d-io"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+description = "File I/O: .blend import, format codecs, read/write pipeline, and versioning for Forge3D"
+
+[dependencies]
+forge3d-math = { path = "../math", package = "forge3d-math" }
+forge3d-mesh = { path = "../mesh", package = "forge3d-mesh" }
+forge3d-scene = { path = "../scene", package = "forge3d-scene" }
+forge3d-dna = { path = "../dna", package = "forge3d-dna" }
+forge3d-anim = { path = "../anim", package = "forge3d-anim" }
+serde = { workspace = true }
+serde_json = { workspace = true }
+rkyv = { workspace = true }
+thiserror = { workspace = true }
+tracing = { workspace = true }

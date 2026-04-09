@@ -1,0 +1,18 @@
+[package]
+name = "forge3d-depsgraph"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+description = "Dependency graph for Forge3D: parallel evaluation of scene data with topological ordering and dirty tagging"
+
+[dependencies]
+forge3d-math = { path = "../math", package = "forge3d-math" }
+forge3d-anim = { path = "../anim", package = "forge3d-anim" }
+forge3d-constraints = { path = "../constraints", package = "forge3d-constraints" }
+forge3d-armature = { path = "../armature", package = "forge3d-armature" }
+rayon = { workspace = true }
+tracing = { workspace = true }
+thiserror = { workspace = true }
+indexmap = { workspace = true }
+parking_lot = { workspace = true }

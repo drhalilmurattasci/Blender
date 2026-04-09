@@ -1,0 +1,18 @@
+[package]
+name = "forge3d-ui-editors"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+description = "Editor panels: 3D viewport, outliner, properties, node editor, timeline, and more for Forge3D"
+
+[dependencies]
+forge3d-math = { path = "../math", package = "forge3d-math" }
+forge3d-gpu = { path = "../gpu", package = "forge3d-gpu" }
+forge3d-window = { path = "../window", package = "forge3d-window" }
+forge3d-ui-core = { path = "../ui-core", package = "forge3d-ui-core" }
+forge3d-mesh = { path = "../mesh", package = "forge3d-mesh" }
+forge3d-anim = { path = "../anim", package = "forge3d-anim" }
+forge3d-render-core = { path = "../render-core", package = "forge3d-render-core" }
+forge3d-scene = { path = "../scene", package = "forge3d-scene" }
+tracing = { workspace = true }

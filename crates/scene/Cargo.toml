@@ -1,0 +1,18 @@
+[package]
+name = "forge3d-scene"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+description = "Scene graph, objects, collections, transforms, visibility, and world settings for Forge3D"
+
+[dependencies]
+forge3d-math = { path = "../math", package = "forge3d-math" }
+forge3d-alloc = { path = "../alloc", package = "forge3d-alloc" }
+forge3d-mesh = { path = "../mesh", package = "forge3d-mesh" }
+forge3d-anim = { path = "../anim", package = "forge3d-anim" }
+forge3d-armature = { path = "../armature", package = "forge3d-armature" }
+forge3d-render-core = { path = "../render-core", package = "forge3d-render-core" }
+forge3d-dna = { path = "../dna", package = "forge3d-dna" }
+serde = { workspace = true }
+bitflags = { workspace = true }
