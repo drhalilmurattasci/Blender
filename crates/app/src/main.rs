@@ -46,38 +46,39 @@ impl CubeVertex {
     }
 }
 
+// #3: All faces are solid gray like Blender's default cube
 #[rustfmt::skip]
 const CUBE_VERTICES: &[CubeVertex] = &[
-    // Front face (muted red)
-    CubeVertex { position: [-0.5, -0.5,  0.5], color: [0.8, 0.3, 0.3] },
-    CubeVertex { position: [ 0.5, -0.5,  0.5], color: [0.8, 0.3, 0.3] },
-    CubeVertex { position: [ 0.5,  0.5,  0.5], color: [0.8, 0.3, 0.3] },
-    CubeVertex { position: [-0.5,  0.5,  0.5], color: [0.8, 0.3, 0.3] },
-    // Back face (muted blue)
-    CubeVertex { position: [-0.5, -0.5, -0.5], color: [0.3, 0.3, 0.8] },
-    CubeVertex { position: [ 0.5, -0.5, -0.5], color: [0.3, 0.3, 0.8] },
-    CubeVertex { position: [ 0.5,  0.5, -0.5], color: [0.3, 0.3, 0.8] },
-    CubeVertex { position: [-0.5,  0.5, -0.5], color: [0.3, 0.3, 0.8] },
-    // Top face (muted green)
-    CubeVertex { position: [-0.5,  0.5, -0.5], color: [0.3, 0.7, 0.3] },
-    CubeVertex { position: [ 0.5,  0.5, -0.5], color: [0.3, 0.7, 0.3] },
-    CubeVertex { position: [ 0.5,  0.5,  0.5], color: [0.3, 0.7, 0.3] },
-    CubeVertex { position: [-0.5,  0.5,  0.5], color: [0.3, 0.7, 0.3] },
-    // Bottom face (muted yellow)
-    CubeVertex { position: [-0.5, -0.5, -0.5], color: [0.7, 0.7, 0.3] },
-    CubeVertex { position: [ 0.5, -0.5, -0.5], color: [0.7, 0.7, 0.3] },
-    CubeVertex { position: [ 0.5, -0.5,  0.5], color: [0.7, 0.7, 0.3] },
-    CubeVertex { position: [-0.5, -0.5,  0.5], color: [0.7, 0.7, 0.3] },
-    // Right face (muted cyan)
-    CubeVertex { position: [ 0.5, -0.5, -0.5], color: [0.3, 0.7, 0.7] },
-    CubeVertex { position: [ 0.5,  0.5, -0.5], color: [0.3, 0.7, 0.7] },
-    CubeVertex { position: [ 0.5,  0.5,  0.5], color: [0.3, 0.7, 0.7] },
-    CubeVertex { position: [ 0.5, -0.5,  0.5], color: [0.3, 0.7, 0.7] },
-    // Left face (muted magenta)
-    CubeVertex { position: [-0.5, -0.5, -0.5], color: [0.7, 0.3, 0.7] },
-    CubeVertex { position: [-0.5,  0.5, -0.5], color: [0.7, 0.3, 0.7] },
-    CubeVertex { position: [-0.5,  0.5,  0.5], color: [0.7, 0.3, 0.7] },
-    CubeVertex { position: [-0.5, -0.5,  0.5], color: [0.7, 0.3, 0.7] },
+    // Front face
+    CubeVertex { position: [-0.5, -0.5,  0.5], color: [0.55, 0.55, 0.55] },
+    CubeVertex { position: [ 0.5, -0.5,  0.5], color: [0.55, 0.55, 0.55] },
+    CubeVertex { position: [ 0.5,  0.5,  0.5], color: [0.55, 0.55, 0.55] },
+    CubeVertex { position: [-0.5,  0.5,  0.5], color: [0.55, 0.55, 0.55] },
+    // Back face
+    CubeVertex { position: [-0.5, -0.5, -0.5], color: [0.55, 0.55, 0.55] },
+    CubeVertex { position: [ 0.5, -0.5, -0.5], color: [0.55, 0.55, 0.55] },
+    CubeVertex { position: [ 0.5,  0.5, -0.5], color: [0.55, 0.55, 0.55] },
+    CubeVertex { position: [-0.5,  0.5, -0.5], color: [0.55, 0.55, 0.55] },
+    // Top face
+    CubeVertex { position: [-0.5,  0.5, -0.5], color: [0.55, 0.55, 0.55] },
+    CubeVertex { position: [ 0.5,  0.5, -0.5], color: [0.55, 0.55, 0.55] },
+    CubeVertex { position: [ 0.5,  0.5,  0.5], color: [0.55, 0.55, 0.55] },
+    CubeVertex { position: [-0.5,  0.5,  0.5], color: [0.55, 0.55, 0.55] },
+    // Bottom face
+    CubeVertex { position: [-0.5, -0.5, -0.5], color: [0.55, 0.55, 0.55] },
+    CubeVertex { position: [ 0.5, -0.5, -0.5], color: [0.55, 0.55, 0.55] },
+    CubeVertex { position: [ 0.5, -0.5,  0.5], color: [0.55, 0.55, 0.55] },
+    CubeVertex { position: [-0.5, -0.5,  0.5], color: [0.55, 0.55, 0.55] },
+    // Right face
+    CubeVertex { position: [ 0.5, -0.5, -0.5], color: [0.55, 0.55, 0.55] },
+    CubeVertex { position: [ 0.5,  0.5, -0.5], color: [0.55, 0.55, 0.55] },
+    CubeVertex { position: [ 0.5,  0.5,  0.5], color: [0.55, 0.55, 0.55] },
+    CubeVertex { position: [ 0.5, -0.5,  0.5], color: [0.55, 0.55, 0.55] },
+    // Left face
+    CubeVertex { position: [-0.5, -0.5, -0.5], color: [0.55, 0.55, 0.55] },
+    CubeVertex { position: [-0.5,  0.5, -0.5], color: [0.55, 0.55, 0.55] },
+    CubeVertex { position: [-0.5,  0.5,  0.5], color: [0.55, 0.55, 0.55] },
+    CubeVertex { position: [-0.5, -0.5,  0.5], color: [0.55, 0.55, 0.55] },
 ];
 
 #[rustfmt::skip]
@@ -256,6 +257,35 @@ impl SceneObject {
 const WORKSPACE_TABS: &[&str] = &[
     "Layout", "Modeling", "Sculpting", "UV Editing",
     "Shading", "Animation", "Rendering",
+];
+
+// ---------------------------------------------------------------------------
+// Properties tab icons (#2)
+// ---------------------------------------------------------------------------
+
+const PROP_TAB_ICONS: &[&str] = &[
+    "T",  // Active Tool
+    "S",  // Scene
+    "W",  // World
+    "O",  // Object (orange)
+    "M",  // Modifiers
+    "P",  // Particles
+    "Ph", // Physics
+    "C",  // Constraints
+    "D",  // Object Data
+];
+
+// ---------------------------------------------------------------------------
+// Left toolbar icons (#1)
+// ---------------------------------------------------------------------------
+
+const TOOLBAR_ICONS: &[(&str, &str)] = &[
+    ("W", "Cursor"),
+    ("G", "Move"),
+    ("R", "Rotate"),
+    ("S", "Scale"),
+    ("T", "Transform"),
+    ("A", "Annotate"),
 ];
 
 // ---------------------------------------------------------------------------
@@ -463,16 +493,7 @@ struct App {
     // UI state
     workspace: usize,
     active_shading: usize,
-
-    // Panel collapse states (used by egui CollapsingState default_open)
-    #[allow(dead_code)]
-    transform_open: bool,
-    #[allow(dead_code)]
-    relations_open: bool,
-    #[allow(dead_code)]
-    collections_open: bool,
-    #[allow(dead_code)]
-    scene_collection_open: bool,
+    active_prop_tab: usize,
 }
 
 impl App {
@@ -500,11 +521,7 @@ impl App {
 
             workspace: 0,
             active_shading: 1,
-
-            transform_open: true,
-            relations_open: false,
-            collections_open: false,
-            scene_collection_open: true,
+            active_prop_tab: 3, // Object tab active by default
         }
     }
 
@@ -589,12 +606,14 @@ impl App {
 
     fn draw_ui(&mut self, ctx: &egui::Context) {
         self.draw_top_bar(ctx);
-        self.draw_timeline(ctx);
+        self.draw_statusbar(ctx);   // #5: bottommost
+        self.draw_timeline(ctx);    // #4: above statusbar
         self.draw_right_panel(ctx);
+        self.draw_left_toolbar(ctx); // #1: left toolbar
         self.draw_viewport(ctx);
     }
 
-    // -- Top bar --
+    // -- Top bar (#10, #11) --
     fn draw_top_bar(&mut self, ctx: &egui::Context) {
         egui::TopBottomPanel::top("topbar")
             .exact_height(26.0)
@@ -613,8 +632,13 @@ impl App {
 
                     ui.separator();
 
-                    // Menus
-                    ui.menu_button("File", |ui| {
+                    // #10: Menus with transparent background (use small_button style)
+                    let menu_text = |t: &str| {
+                        egui::RichText::new(t)
+                            .color(Color32::from_rgb(200, 200, 200))
+                            .size(12.0)
+                    };
+                    ui.menu_button(menu_text("File"), |ui| {
                         if ui.button("New").clicked() { ui.close_menu(); }
                         if ui.button("Open...").clicked() { ui.close_menu(); }
                         if ui.button("Save").clicked() { ui.close_menu(); }
@@ -622,29 +646,44 @@ impl App {
                         ui.separator();
                         if ui.button("Quit").clicked() { ui.close_menu(); }
                     });
-                    ui.menu_button("Edit", |ui| {
+                    ui.menu_button(menu_text("Edit"), |ui| {
                         if ui.button("Undo").clicked() { ui.close_menu(); }
                         if ui.button("Redo").clicked() { ui.close_menu(); }
                         ui.separator();
                         if ui.button("Preferences...").clicked() { ui.close_menu(); }
                     });
-                    ui.menu_button("Render", |ui| {
+                    ui.menu_button(menu_text("Render"), |ui| {
                         if ui.button("Render Image").clicked() { ui.close_menu(); }
                         if ui.button("Render Animation").clicked() { ui.close_menu(); }
                     });
-                    ui.menu_button("Window", |ui| {
+                    ui.menu_button(menu_text("Window"), |ui| {
                         if ui.button("New Window").clicked() { ui.close_menu(); }
                         if ui.button("Toggle Fullscreen").clicked() { ui.close_menu(); }
                     });
-                    ui.menu_button("Help", |ui| {
+                    ui.menu_button(menu_text("Help"), |ui| {
                         if ui.button("About Forge3D").clicked() { ui.close_menu(); }
                     });
 
                     ui.separator();
 
-                    // Workspace tabs
+                    // #11: Workspace tabs — active one has lighter bg
                     for (i, name) in WORKSPACE_TABS.iter().enumerate() {
-                        if ui.selectable_label(self.workspace == i, *name).clicked() {
+                        let is_active = self.workspace == i;
+                        let label = egui::RichText::new(*name)
+                            .size(12.0)
+                            .color(if is_active {
+                                Color32::WHITE
+                            } else {
+                                Color32::from_rgb(160, 160, 160)
+                            });
+                        let btn = egui::Button::new(label)
+                            .fill(if is_active {
+                                Color32::from_rgb(58, 58, 58)
+                            } else {
+                                Color32::TRANSPARENT
+                            })
+                            .stroke(Stroke::NONE);
+                        if ui.add(btn).clicked() {
                             self.workspace = i;
                         }
                     }
@@ -666,99 +705,138 @@ impl App {
             });
     }
 
-    // -- Timeline --
-    fn draw_timeline(&mut self, ctx: &egui::Context) {
-        egui::TopBottomPanel::bottom("timeline")
-            .exact_height(80.0)
+    // -- #5: Status bar (very bottom) --
+    fn draw_statusbar(&self, ctx: &egui::Context) {
+        egui::TopBottomPanel::bottom("statusbar")
+            .exact_height(22.0)
             .frame(Frame::NONE.fill(Color32::from_rgb(42, 42, 42)))
             .show(ctx, |ui| {
-                ui.horizontal(|ui| {
+                ui.horizontal_centered(|ui| {
+                    ui.label(
+                        egui::RichText::new("Object Mode")
+                            .color(Color32::from_rgb(180, 180, 180))
+                            .size(11.0),
+                    );
+                    ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                        ui.label(
+                            egui::RichText::new("Verts:8  Faces:6  Tris:12 | Blender C++\u{2192}Rust conversion")
+                                .color(Color32::from_rgb(140, 140, 140))
+                                .size(11.0),
+                        );
+                    });
+                });
+            });
+    }
+
+    // -- #4: Timeline (thin, 32px) --
+    fn draw_timeline(&mut self, ctx: &egui::Context) {
+        egui::TopBottomPanel::bottom("timeline")
+            .exact_height(32.0)
+            .frame(Frame::NONE.fill(Color32::from_rgb(42, 42, 42)))
+            .show(ctx, |ui| {
+                ui.horizontal_centered(|ui| {
                     ui.spacing_mut().item_spacing.x = 2.0;
 
+                    // Left: editor type label
+                    ui.label(
+                        egui::RichText::new("Dope Sheet")
+                            .color(Color32::from_rgb(180, 180, 180))
+                            .size(11.0),
+                    );
+                    ui.separator();
+
                     // Transport buttons
-                    if ui.button("\u{23EE}").clicked() {
+                    if ui.small_button("\u{23EE}").clicked() {
                         self.current_frame = self.start_frame;
                     }
-                    if ui.button("\u{23EA}").clicked() {
+                    if ui.small_button("\u{23EA}").clicked() {
                         self.current_frame = (self.current_frame - 1).max(self.start_frame);
                     }
                     let play_label = if self.playing { "\u{23F8}" } else { "\u{25B6}" };
-                    if ui.button(play_label).clicked() {
+                    if ui.small_button(play_label).clicked() {
                         self.playing = !self.playing;
                         if self.playing {
                             self.start_time = Instant::now();
                         }
                     }
-                    if ui.button("\u{23E9}").clicked() {
+                    if ui.small_button("\u{23E9}").clicked() {
                         self.current_frame = (self.current_frame + 1).min(self.end_frame);
                     }
-                    if ui.button("\u{23ED}").clicked() {
+                    if ui.small_button("\u{23ED}").clicked() {
                         self.current_frame = self.end_frame;
                     }
 
                     ui.separator();
 
-                    ui.label("Frame:");
+                    // Frame counter
                     ui.add(egui::DragValue::new(&mut self.current_frame)
                         .range(self.start_frame..=self.end_frame)
                         .speed(0.5));
 
                     ui.separator();
 
-                    ui.label("Start:");
-                    ui.add(egui::DragValue::new(&mut self.start_frame).speed(1.0));
-                    ui.label("End:");
-                    ui.add(egui::DragValue::new(&mut self.end_frame).speed(1.0));
+                    ui.label(
+                        egui::RichText::new(format!("{} / {}", self.start_frame, self.end_frame))
+                            .color(Color32::from_rgb(140, 140, 140))
+                            .size(11.0),
+                    );
                 });
+            });
+    }
 
-                // Timeline scrub slider
-                ui.add_space(4.0);
-                let mut frame_f = self.current_frame as f32;
-                let slider = egui::Slider::new(
-                    &mut frame_f,
-                    self.start_frame as f32..=self.end_frame as f32,
-                )
-                .show_value(false);
-                if ui.add(slider).changed() {
-                    self.current_frame = frame_f as i32;
-                }
-
-                // Frame ruler marks
-                ui.horizontal(|ui| {
-                    let available = ui.available_width();
-                    let range = (self.end_frame - self.start_frame).max(1) as f32;
-                    let step = (range / 10.0).max(1.0) as i32;
-                    for i in 0..=10 {
-                        let f = self.start_frame + i * step;
-                        let x_frac = (f - self.start_frame) as f32 / range;
-                        let _ = available; // use for layout reference
-                        ui.label(
-                            egui::RichText::new(format!("{f}"))
-                                .color(Color32::from_rgb(140, 140, 140))
-                                .size(9.0),
-                        );
-                        if x_frac < 0.95 {
-                            ui.add_space(available / 12.0 - 20.0);
-                        }
+    // -- #1: Left toolbar --
+    fn draw_left_toolbar(&mut self, ctx: &egui::Context) {
+        egui::SidePanel::left("toolbar")
+            .exact_width(40.0)
+            .frame(Frame::NONE.fill(Color32::from_rgb(40, 40, 40)))
+            .show(ctx, |ui| {
+                ui.vertical_centered(|ui| {
+                    ui.add_space(4.0);
+                    for (icon, _tooltip) in TOOLBAR_ICONS {
+                        let btn = egui::Button::new(
+                            egui::RichText::new(*icon)
+                                .size(14.0)
+                                .color(Color32::from_rgb(200, 200, 200)),
+                        )
+                        .min_size(egui::vec2(32.0, 28.0))
+                        .fill(Color32::from_rgb(50, 50, 50))
+                        .stroke(Stroke::new(0.5, Color32::from_rgb(35, 35, 35)));
+                        ui.add(btn);
+                        ui.add_space(1.0);
                     }
                 });
             });
     }
 
-    // -- Right panel: outliner + properties --
+    // -- Right panel: outliner + properties (#2, #8) --
     fn draw_right_panel(&mut self, ctx: &egui::Context) {
         egui::SidePanel::right("right")
             .exact_width(300.0)
             .frame(Frame::NONE.fill(Color32::from_rgb(40, 40, 40)))
             .show(ctx, |ui| {
-                // Outliner section
-                ui.label(
-                    egui::RichText::new("Outliner")
-                        .color(Color32::from_rgb(180, 180, 180))
-                        .size(11.0),
-                );
+                // #8: Outliner header
+                ui.horizontal(|ui| {
+                    ui.label(
+                        egui::RichText::new("Outliner")
+                            .color(Color32::from_rgb(180, 180, 180))
+                            .size(11.0),
+                    );
+                    ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                        ui.label(
+                            egui::RichText::new("View Layer")
+                                .color(Color32::from_rgb(140, 140, 140))
+                                .size(10.0),
+                        );
+                        ui.label(
+                            egui::RichText::new("F")
+                                .color(Color32::from_rgb(140, 140, 140))
+                                .size(10.0),
+                        );
+                    });
+                });
                 ui.separator();
 
+                // Outliner body
                 egui::CollapsingHeader::new(
                         egui::RichText::new("Scene Collection")
                             .color(Color32::from_rgb(200, 200, 200)),
@@ -802,59 +880,98 @@ impl App {
                         self.selected = new_selected;
                     });
 
-                ui.add_space(10.0);
+                ui.add_space(6.0);
                 ui.separator();
 
-                // Properties section
-                ui.label(
-                    egui::RichText::new("Properties")
-                        .color(Color32::from_rgb(180, 180, 180))
-                        .size(11.0),
-                );
-                ui.separator();
+                // #2: Properties section with vertical tab bar on the left
+                ui.horizontal(|ui| {
+                    // Vertical tab strip
+                    ui.vertical(|ui| {
+                        ui.set_width(28.0);
+                        ui.spacing_mut().item_spacing.y = 1.0;
+                        for (i, icon) in PROP_TAB_ICONS.iter().enumerate() {
+                            let is_active = self.active_prop_tab == i;
+                            let color = if i == 3 {
+                                // Object tab gets orange text
+                                Color32::from_rgb(220, 140, 50)
+                            } else if i == 8 {
+                                // Object Data tab gets green text
+                                Color32::from_rgb(80, 200, 80)
+                            } else {
+                                Color32::from_rgb(180, 180, 180)
+                            };
+                            let label = egui::RichText::new(*icon)
+                                .size(11.0)
+                                .color(color);
+                            let btn = egui::Button::new(label)
+                                .min_size(egui::vec2(26.0, 22.0))
+                                .fill(if is_active {
+                                    Color32::from_rgb(60, 60, 60)
+                                } else {
+                                    Color32::TRANSPARENT
+                                })
+                                .stroke(Stroke::NONE);
+                            if ui.add(btn).clicked() {
+                                self.active_prop_tab = i;
+                            }
+                        }
+                    });
 
-                if let Some(obj) = self.objects.get_mut(self.selected) {
-                    // Transform
-                    let transform_id = ui.make_persistent_id("transform_section");
-                    egui::collapsing_header::CollapsingState::load_with_default_open(ui.ctx(), transform_id, true)
-                        .show_header(ui, |ui| {
-                            ui.label(
-                                egui::RichText::new("Transform")
-                                    .color(Color32::from_rgb(200, 200, 200)),
-                            );
-                        })
-                        .body(|ui| {
-                            Self::draw_xyz_row(ui, "Location", &mut obj.location, 0.01);
-                            Self::draw_xyz_row(ui, "Rotation", &mut obj.rotation, 0.5);
-                            Self::draw_xyz_row(ui, "Scale", &mut obj.scale, 0.01);
-                        });
+                    ui.separator();
 
-                    // Relations
-                    let relations_id = ui.make_persistent_id("relations_section");
-                    egui::collapsing_header::CollapsingState::load_with_default_open(ui.ctx(), relations_id, false)
-                        .show_header(ui, |ui| {
-                            ui.label(
-                                egui::RichText::new("Relations")
-                                    .color(Color32::from_rgb(200, 200, 200)),
-                            );
-                        })
-                        .body(|ui| {
-                            ui.label("Parent: None");
-                        });
+                    // Properties content
+                    ui.vertical(|ui| {
+                        ui.label(
+                            egui::RichText::new("Properties")
+                                .color(Color32::from_rgb(180, 180, 180))
+                                .size(11.0),
+                        );
+                        ui.separator();
 
-                    // Collections
-                    let collections_id = ui.make_persistent_id("collections_section");
-                    egui::collapsing_header::CollapsingState::load_with_default_open(ui.ctx(), collections_id, false)
-                        .show_header(ui, |ui| {
-                            ui.label(
-                                egui::RichText::new("Collections")
-                                    .color(Color32::from_rgb(200, 200, 200)),
-                            );
-                        })
-                        .body(|ui| {
-                            ui.label("Scene Collection");
-                        });
-                }
+                        if let Some(obj) = self.objects.get_mut(self.selected) {
+                            // Transform
+                            let transform_id = ui.make_persistent_id("transform_section");
+                            egui::collapsing_header::CollapsingState::load_with_default_open(ui.ctx(), transform_id, true)
+                                .show_header(ui, |ui| {
+                                    ui.label(
+                                        egui::RichText::new("Transform")
+                                            .color(Color32::from_rgb(200, 200, 200)),
+                                    );
+                                })
+                                .body(|ui| {
+                                    Self::draw_xyz_row(ui, "Location", &mut obj.location, 0.01);
+                                    Self::draw_xyz_row(ui, "Rotation", &mut obj.rotation, 0.5);
+                                    Self::draw_xyz_row(ui, "Scale", &mut obj.scale, 0.01);
+                                });
+
+                            // Relations
+                            let relations_id = ui.make_persistent_id("relations_section");
+                            egui::collapsing_header::CollapsingState::load_with_default_open(ui.ctx(), relations_id, false)
+                                .show_header(ui, |ui| {
+                                    ui.label(
+                                        egui::RichText::new("Relations")
+                                            .color(Color32::from_rgb(200, 200, 200)),
+                                    );
+                                })
+                                .body(|ui| {
+                                    ui.label("Parent: None");
+                                });
+
+                            // Collections
+                            let collections_id = ui.make_persistent_id("collections_section");
+                            egui::collapsing_header::CollapsingState::load_with_default_open(ui.ctx(), collections_id, false)
+                                .show_header(ui, |ui| {
+                                    ui.label(
+                                        egui::RichText::new("Collections")
+                                            .color(Color32::from_rgb(200, 200, 200)),
+                                    );
+                                })
+                                .body(|ui| {
+                                    ui.label("Scene Collection");
+                                });
+                        }
+                    });
+                });
             });
     }
 
@@ -874,28 +991,82 @@ impl App {
         });
     }
 
+    // -- #7: Viewport header bar --
+    fn draw_viewport_header(ui: &mut egui::Ui, active_shading: &mut usize) {
+        ui.horizontal(|ui| {
+            ui.spacing_mut().item_spacing.x = 4.0;
+
+            // Left: Object Mode menu
+            ui.menu_button(
+                egui::RichText::new("Object Mode \u{25BC}")
+                    .color(Color32::from_rgb(200, 200, 200))
+                    .size(11.0),
+                |ui| {
+                    if ui.button("Object Mode").clicked() { ui.close_menu(); }
+                    if ui.button("Edit Mode").clicked() { ui.close_menu(); }
+                    if ui.button("Sculpt Mode").clicked() { ui.close_menu(); }
+                },
+            );
+
+            ui.separator();
+
+            // Pivot, snap, proportional icons
+            ui.label(egui::RichText::new("\u{2316}").color(Color32::from_rgb(180, 180, 180)).size(12.0)); // pivot
+            ui.label(egui::RichText::new("\u{25C7}").color(Color32::from_rgb(180, 180, 180)).size(12.0)); // snap
+            ui.label(egui::RichText::new("\u{25CE}").color(Color32::from_rgb(180, 180, 180)).size(12.0)); // proportional
+
+            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                // X-Ray toggle
+                ui.label(egui::RichText::new("X").color(Color32::from_rgb(140, 140, 140)).size(11.0));
+
+                ui.separator();
+
+                // Overlays menu
+                ui.menu_button(
+                    egui::RichText::new("Overlays \u{25BC}")
+                        .color(Color32::from_rgb(180, 180, 180))
+                        .size(11.0),
+                    |ui| {
+                        if ui.button("Show Overlays").clicked() { ui.close_menu(); }
+                    },
+                );
+
+                ui.separator();
+
+                // Shading mode circles
+                let shading_icons = [
+                    ("\u{25CB}", "Wireframe"),
+                    ("\u{25CE}", "Solid"),
+                    ("\u{25C9}", "Material"),
+                    ("\u{25CF}", "Rendered"),
+                ];
+                for (i, (icon, _name)) in shading_icons.iter().enumerate().rev() {
+                    let is_active = *active_shading == i;
+                    let color = if is_active {
+                        Color32::WHITE
+                    } else {
+                        Color32::from_rgb(140, 140, 140)
+                    };
+                    let btn = egui::Button::new(
+                        egui::RichText::new(*icon).color(color).size(14.0),
+                    )
+                    .fill(Color32::TRANSPARENT)
+                    .stroke(Stroke::NONE);
+                    if ui.add(btn).clicked() {
+                        *active_shading = i;
+                    }
+                }
+            });
+        });
+    }
+
     // -- 3D Viewport --
     fn draw_viewport(&mut self, ctx: &egui::Context) {
         egui::CentralPanel::default()
             .frame(Frame::NONE.fill(Color32::from_rgb(51, 51, 51)))
             .show(ctx, |ui| {
-                // Viewport header
-                ui.horizontal(|ui| {
-                    ui.spacing_mut().item_spacing.x = 2.0;
-                    ui.label(
-                        egui::RichText::new("Object Mode")
-                            .color(Color32::from_rgb(200, 200, 200))
-                            .size(11.0),
-                    );
-                    ui.separator();
-
-                    let shading_labels = ["Wire", "Solid", "Material", "Rendered"];
-                    for (i, label) in shading_labels.iter().enumerate() {
-                        if ui.selectable_label(self.active_shading == i, *label).clicked() {
-                            self.active_shading = i;
-                        }
-                    }
-                });
+                // #7: Viewport header bar
+                Self::draw_viewport_header(ui, &mut self.active_shading);
                 ui.separator();
 
                 // 3D cube render via callback
@@ -914,46 +1085,57 @@ impl App {
                 );
                 ui.painter().add(cb);
 
-                // Grid overlay
+                // #9: Grid overlay with perspective-like alpha fade
                 let painter = ui.painter();
-                let grid_color = Color32::from_rgba_premultiplied(70, 70, 70, 60);
                 let center = rect.center();
                 let grid_spacing = 50.0;
+                let max_dist = rect.width().max(rect.height()) * 0.5;
+
+                // Helper: draw grid lines with alpha fading from center
+                let draw_grid_line = |p0: egui::Pos2, p1: egui::Pos2, dist_from_center: f32| {
+                    let alpha = (1.0 - (dist_from_center / max_dist).powf(0.6)).max(0.0);
+                    let a = (60.0 * alpha) as u8;
+                    if a > 2 {
+                        let c = Color32::from_rgba_premultiplied(70, 70, 70, a);
+                        let width = if dist_from_center < grid_spacing * 0.5 { 0.8 } else { 0.5 };
+                        painter.line_segment([p0, p1], Stroke::new(width, c));
+                    }
+                };
 
                 // Horizontal lines
                 let mut y = center.y;
+                let mut idx = 0.0_f32;
                 while y >= rect.top() {
-                    painter.line_segment(
-                        [egui::pos2(rect.left(), y), egui::pos2(rect.right(), y)],
-                        Stroke::new(0.5, grid_color),
-                    );
+                    let dist = idx * grid_spacing;
+                    draw_grid_line(egui::pos2(rect.left(), y), egui::pos2(rect.right(), y), dist);
                     y -= grid_spacing;
+                    idx += 1.0;
                 }
                 y = center.y + grid_spacing;
+                idx = 1.0;
                 while y <= rect.bottom() {
-                    painter.line_segment(
-                        [egui::pos2(rect.left(), y), egui::pos2(rect.right(), y)],
-                        Stroke::new(0.5, grid_color),
-                    );
+                    let dist = idx * grid_spacing;
+                    draw_grid_line(egui::pos2(rect.left(), y), egui::pos2(rect.right(), y), dist);
                     y += grid_spacing;
+                    idx += 1.0;
                 }
 
                 // Vertical lines
                 let mut x = center.x;
+                idx = 0.0;
                 while x >= rect.left() {
-                    painter.line_segment(
-                        [egui::pos2(x, rect.top()), egui::pos2(x, rect.bottom())],
-                        Stroke::new(0.5, grid_color),
-                    );
+                    let dist = idx * grid_spacing;
+                    draw_grid_line(egui::pos2(x, rect.top()), egui::pos2(x, rect.bottom()), dist);
                     x -= grid_spacing;
+                    idx += 1.0;
                 }
                 x = center.x + grid_spacing;
+                idx = 1.0;
                 while x <= rect.right() {
-                    painter.line_segment(
-                        [egui::pos2(x, rect.top()), egui::pos2(x, rect.bottom())],
-                        Stroke::new(0.5, grid_color),
-                    );
+                    let dist = idx * grid_spacing;
+                    draw_grid_line(egui::pos2(x, rect.top()), egui::pos2(x, rect.bottom()), dist);
                     x += grid_spacing;
+                    idx += 1.0;
                 }
 
                 // Axis lines (X = red, Y = green)
@@ -966,9 +1148,10 @@ impl App {
                     Stroke::new(1.0, Color32::from_rgba_premultiplied(50, 150, 50, 100)),
                 );
 
-                // XYZ gizmo in bottom-left
-                let gizmo_origin = egui::pos2(rect.left() + 40.0, rect.bottom() - 40.0);
+                // #6: XYZ gizmo in TOP-RIGHT corner
+                let gizmo_origin = egui::pos2(rect.right() - 50.0, rect.top() + 50.0);
                 let gizmo_len = 30.0;
+                // X axis
                 painter.line_segment(
                     [gizmo_origin, egui::pos2(gizmo_origin.x + gizmo_len, gizmo_origin.y)],
                     Stroke::new(2.0, Color32::from_rgb(200, 60, 60)),
@@ -980,6 +1163,7 @@ impl App {
                     egui::FontId::proportional(10.0),
                     Color32::from_rgb(200, 60, 60),
                 );
+                // Y axis (up)
                 painter.line_segment(
                     [gizmo_origin, egui::pos2(gizmo_origin.x, gizmo_origin.y - gizmo_len)],
                     Stroke::new(2.0, Color32::from_rgb(60, 200, 60)),
@@ -991,35 +1175,17 @@ impl App {
                     egui::FontId::proportional(10.0),
                     Color32::from_rgb(60, 200, 60),
                 );
-                // Z goes diagonally
+                // Z axis (diagonal)
                 painter.line_segment(
-                    [gizmo_origin, egui::pos2(gizmo_origin.x - gizmo_len * 0.5, gizmo_origin.y - gizmo_len * 0.5)],
+                    [gizmo_origin, egui::pos2(gizmo_origin.x - gizmo_len * 0.5, gizmo_origin.y + gizmo_len * 0.5)],
                     Stroke::new(2.0, Color32::from_rgb(60, 100, 200)),
                 );
                 painter.text(
-                    egui::pos2(gizmo_origin.x - gizmo_len * 0.5 - 10.0, gizmo_origin.y - gizmo_len * 0.5),
+                    egui::pos2(gizmo_origin.x - gizmo_len * 0.5 - 10.0, gizmo_origin.y + gizmo_len * 0.5),
                     egui::Align2::RIGHT_CENTER,
                     "Z",
                     egui::FontId::proportional(10.0),
                     Color32::from_rgb(60, 100, 200),
-                );
-
-                // "Object Mode" overlay top-left
-                painter.text(
-                    egui::pos2(rect.left() + 8.0, rect.top() + 8.0),
-                    egui::Align2::LEFT_TOP,
-                    "Object Mode",
-                    egui::FontId::proportional(12.0),
-                    Color32::from_rgb(200, 200, 200),
-                );
-
-                // Stats overlay bottom-right
-                painter.text(
-                    egui::pos2(rect.right() - 8.0, rect.bottom() - 8.0),
-                    egui::Align2::RIGHT_BOTTOM,
-                    "Verts: 8  Faces: 6",
-                    egui::FontId::proportional(11.0),
-                    Color32::from_rgb(160, 160, 160),
                 );
             });
     }
