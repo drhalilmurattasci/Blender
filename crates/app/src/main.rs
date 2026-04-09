@@ -731,7 +731,9 @@ impl App {
         .expect("Failed to create device");
 
         let caps = surface.get_capabilities(&adapter);
-        let format = caps.formats.iter().find(|f| f.is_srgb()).copied().unwrap_or(caps.formats[0]);
+        // Use a NON-sRGB format so our theme color bytes (already in sRGB space) display correctly.
+        // With an sRGB format, the GPU applies gamma encoding on top, making colors too bright.
+        let format = caps.formats.iter().find(|f| !f.is_srgb()).copied().unwrap_or(caps.formats[0]);
 
         let config = wgpu::SurfaceConfiguration {
             usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
@@ -811,7 +813,7 @@ impl App {
             let menu_labels = ["File", "Edit", "Render", "Window", "Help"];
             let mut bx = 28.0; // after logo area
             for label in &menu_labels {
-                let bw = label.len() as f32 * 7.0 + 12.0;
+                let bw = (label.len() as f32 * 8.0 + 16.0).max(40.0);
                 dl.append(&draw_button(
                     Rect::new(bx, 2.0, bw, HEADERY - 4.0),
                     label,
@@ -824,7 +826,7 @@ impl App {
             // Workspace tabs
             let mut tx = bx + 20.0;
             for (i, tab) in WORKSPACE_TABS.iter().enumerate() {
-                let tw = tab.len() as f32 * 7.0 + 12.0;
+                let tw = tab.len() as f32 * 8.0 + 16.0;
                 let state = if i == self.active_workspace {
                     WidgetState::Active
                 } else {
@@ -867,6 +869,58 @@ impl App {
                 sx += 50.0;
             }
         }
+
+        // -- Viewport grid floor (drawn via DrawList into viewport area) --
+        {
+            let vp_top = HEADERY * 2.0;
+            let vp_bottom = h - TIMELINE_H;
+            let vp_cx = vp_right * 0.5;
+            let vp_cy = (vp_top + vp_bottom) * 0.5;
+            let grid_color: [u8; 4] = [84, 84, 84, 200];
+            let grid_spacing = 50.0;
+
+            // Horizontal grid lines
+            let mut y = vp_cy;
+            while y >= vp_top {
+                dl.add_line(0.0, y, vp_right, y, grid_color);
+                y -= grid_spacing;
+            }
+            y = vp_cy + grid_spacing;
+            while y <= vp_bottom {
+                dl.add_line(0.0, y, vp_right, y, grid_color);
+                y += grid_spacing;
+            }
+
+            // Vertical grid lines
+            let mut x = vp_cx;
+            while x >= 0.0 {
+                dl.add_line(x, vp_top, x, vp_bottom, grid_color);
+                x -= grid_spacing;
+            }
+            x = vp_cx + grid_spacing;
+            while x <= vp_right {
+                dl.add_line(x, vp_top, x, vp_bottom, grid_color);
+                x += grid_spacing;
+            }
+
+            // X axis (red) through center
+            dl.add_line(0.0, vp_cy, vp_right, vp_cy, [180, 50, 50, 160]);
+            // Y axis (green) through center
+            dl.add_line(vp_cx, vp_top, vp_cx, vp_bottom, [50, 180, 50, 160]);
+        }
+
+        // -- Panel separator borders (#242424) --
+        let sep_color: [u8; 4] = [36, 36, 36, 255];
+        // Top bar / viewport border
+        dl.add_line(0.0, HEADERY, w, HEADERY, sep_color);
+        // Viewport header / viewport body border
+        dl.add_line(0.0, HEADERY * 2.0, vp_right, HEADERY * 2.0, sep_color);
+        // Viewport / right panel vertical border
+        dl.add_line(vp_right, HEADERY, vp_right, h - TIMELINE_H, sep_color);
+        // Viewport / timeline border
+        dl.add_line(0.0, h - TIMELINE_H, w, h - TIMELINE_H, sep_color);
+        // Outliner / properties border
+        dl.add_line(vp_right, ol_split_y, w, ol_split_y, sep_color);
 
         // 5. Outliner background (right panel, top 40%)
         dl.add_rect_filled(
@@ -1090,6 +1144,25 @@ impl App {
             timeline::SCRUB_BACK,
         );
 
+        // Frame ruler tick marks
+        {
+            let scrub_y = h - TIMELINE_H + HEADERY;
+            let total = (self.end_frame - self.start_frame).max(1) as f32;
+            let tick_color: [u8; 4] = [120, 120, 120, 255];
+            let minor_tick_color: [u8; 4] = [80, 80, 80, 255];
+            for f in self.start_frame..=self.end_frame {
+                let frac = (f - self.start_frame) as f32 / total;
+                let x = frac * w;
+                if f % 50 == 0 {
+                    // Major tick
+                    dl.add_line(x, scrub_y, x, scrub_y + UI_UNIT_Y, tick_color);
+                } else if f % 10 == 0 {
+                    // Minor tick
+                    dl.add_line(x, scrub_y + UI_UNIT_Y * 0.5, x, scrub_y + UI_UNIT_Y, minor_tick_color);
+                }
+            }
+        }
+
         // Current frame indicator line
         {
             let total = (self.end_frame - self.start_frame).max(1) as f32;
@@ -1189,12 +1262,12 @@ impl App {
         let menu_labels = ["File", "Edit", "Render", "Window", "Help"];
         let mut bx = 34.0;
         for label in &menu_labels {
-            let bw = label.len() as f32 * 7.0 + 12.0;
+            let bw = (label.len() as f32 * 8.0 + 16.0).max(40.0);
             painter.text(
                 egui::pos2(bx + bw * 0.5, HEADERY * 0.5),
                 egui::Align2::CENTER_CENTER,
                 *label,
-                egui::FontId::proportional(11.0),
+                egui::FontId::proportional(13.0),
                 text_color,
             );
             bx += bw + 2.0;
@@ -1212,13 +1285,13 @@ impl App {
         // -- Workspace tab labels --
         let mut tx = bx + 20.0;
         for (i, tab) in WORKSPACE_TABS.iter().enumerate() {
-            let tw = tab.len() as f32 * 7.0 + 12.0;
+            let tw = tab.len() as f32 * 8.0 + 16.0;
             let color = if i == self.active_workspace { egui::Color32::WHITE } else { text_color };
             painter.text(
                 egui::pos2(tx + tw * 0.5, HEADERY * 0.5),
                 egui::Align2::CENTER_CENTER,
                 *tab,
-                egui::FontId::proportional(11.0),
+                egui::FontId::proportional(13.0),
                 color,
             );
             tx += tw + 2.0;
@@ -1229,7 +1302,7 @@ impl App {
             egui::pos2(w - 80.0, HEADERY * 0.5),
             egui::Align2::RIGHT_CENTER,
             "Scene  |  ViewLayer",
-            egui::FontId::proportional(10.0),
+            egui::FontId::proportional(13.0),
             text_color,
         );
 
@@ -1238,7 +1311,7 @@ impl App {
             egui::pos2(50.0, HEADERY + HEADERY * 0.5),
             egui::Align2::CENTER_CENTER,
             "Object Mode",
-            egui::FontId::proportional(11.0),
+            egui::FontId::proportional(13.0),
             text_color,
         );
 
@@ -1246,7 +1319,7 @@ impl App {
             egui::pos2(130.0, HEADERY + HEADERY * 0.5),
             egui::Align2::CENTER_CENTER,
             "Global",
-            egui::FontId::proportional(11.0),
+            egui::FontId::proportional(13.0),
             text_color,
         );
 
@@ -1254,7 +1327,7 @@ impl App {
             egui::pos2(210.0, HEADERY + HEADERY * 0.5),
             egui::Align2::CENTER_CENTER,
             "Median Point",
-            egui::FontId::proportional(11.0),
+            egui::FontId::proportional(13.0),
             text_color,
         );
 
@@ -1267,7 +1340,7 @@ impl App {
                 egui::pos2(sx + 24.0, HEADERY + HEADERY * 0.5),
                 egui::Align2::CENTER_CENTER,
                 *label,
-                egui::FontId::proportional(10.0),
+                egui::FontId::proportional(13.0),
                 color,
             );
             sx += 50.0;
@@ -1278,14 +1351,14 @@ impl App {
             egui::pos2(vp_right - 90.0, HEADERY + HEADERY * 0.5),
             egui::Align2::CENTER_CENTER,
             "Overlays",
-            egui::FontId::proportional(10.0),
+            egui::FontId::proportional(13.0),
             if self.overlays_on { egui::Color32::WHITE } else { text_color },
         );
         painter.text(
             egui::pos2(vp_right - 30.0, HEADERY + HEADERY * 0.5),
             egui::Align2::CENTER_CENTER,
             "X-Ray",
-            egui::FontId::proportional(10.0),
+            egui::FontId::proportional(13.0),
             if self.xray_on { egui::Color32::from_rgb(255, 160, 40) } else { text_color },
         );
 
@@ -1294,7 +1367,7 @@ impl App {
             egui::pos2(vp_right + 28.0, HEADERY + HEADERY * 0.5),
             egui::Align2::LEFT_CENTER,
             "Outliner",
-            egui::FontId::proportional(11.0),
+            egui::FontId::proportional(13.0),
             title_color,
         );
 
@@ -1303,7 +1376,7 @@ impl App {
             egui::pos2(vp_right + 8.0, HEADERY * 2.0 + UI_UNIT_Y * 0.5),
             egui::Align2::LEFT_CENTER,
             "Display Mode: View Layer",
-            egui::FontId::proportional(10.0),
+            egui::FontId::proportional(13.0),
             text_color,
         );
 
@@ -1312,7 +1385,7 @@ impl App {
             egui::pos2(vp_right + 40.0, HEADERY * 2.0 + UI_UNIT_Y + UI_UNIT_Y * 0.5),
             egui::Align2::LEFT_CENTER,
             "\u{25BC} \u{1F4C1} Scene Collection",
-            egui::FontId::proportional(12.0),
+            egui::FontId::proportional(13.0),
             text_color,
         );
 
@@ -1350,7 +1423,7 @@ impl App {
                     egui::pos2(text_x + ICON_DEFAULT + 2.0, ry + UI_UNIT_Y * 0.5),
                     egui::Align2::LEFT_CENTER,
                     &obj.name,
-                    egui::FontId::proportional(12.0),
+                    egui::FontId::proportional(13.0),
                     if is_selected { egui::Color32::WHITE } else { text_color },
                 );
 
@@ -1360,7 +1433,7 @@ impl App {
                     egui::pos2(w - 52.0, ry + UI_UNIT_Y * 0.5),
                     egui::Align2::CENTER_CENTER,
                     eye,
-                    egui::FontId::proportional(11.0),
+                    egui::FontId::proportional(13.0),
                     dim_color,
                 );
                 let cam = if obj.renderable { "\u{1F4F7}" } else { "\u{2014}" };
@@ -1368,7 +1441,7 @@ impl App {
                     egui::pos2(w - 32.0, ry + UI_UNIT_Y * 0.5),
                     egui::Align2::CENTER_CENTER,
                     cam,
-                    egui::FontId::proportional(10.0),
+                    egui::FontId::proportional(13.0),
                     dim_color,
                 );
                 let sel = if obj.selectable { "\u{2AFD}" } else { "\u{2014}" };
@@ -1376,7 +1449,7 @@ impl App {
                     egui::pos2(w - 12.0, ry + UI_UNIT_Y * 0.5),
                     egui::Align2::CENTER_CENTER,
                     sel,
-                    egui::FontId::proportional(10.0),
+                    egui::FontId::proportional(13.0),
                     dim_color,
                 );
             }
@@ -1388,7 +1461,7 @@ impl App {
             egui::pos2(vp_right + 28.0, props_y + HEADERY * 0.5),
             egui::Align2::LEFT_CENTER,
             "Properties",
-            egui::FontId::proportional(11.0),
+            egui::FontId::proportional(13.0),
             title_color,
         );
 
@@ -1401,7 +1474,7 @@ impl App {
                 egui::pos2(vp_right + 2.0 + UI_UNIT_X * 0.5, ty + UI_UNIT_Y * 0.5),
                 egui::Align2::CENTER_CENTER,
                 *icon,
-                egui::FontId::proportional(12.0),
+                egui::FontId::proportional(13.0),
                 color,
             );
         }
@@ -1423,7 +1496,7 @@ impl App {
                 egui::pos2(content_x + 4.0, py + (UI_UNIT_Y + 4.0) * 0.5),
                 egui::Align2::LEFT_CENTER,
                 &format!("{} {}", type_icon, obj.name),
-                egui::FontId::proportional(12.0),
+                egui::FontId::proportional(13.0),
                 egui::Color32::from_rgb(237, 87, 0),
             );
         }
@@ -1435,7 +1508,7 @@ impl App {
             egui::pos2(content_x + 22.0, py + HEADERY * 0.5),
             egui::Align2::LEFT_CENTER,
             &format!("{} Transform", tri),
-            egui::FontId::proportional(12.0),
+            egui::FontId::proportional(13.0),
             title_color,
         );
         py += HEADERY;
@@ -1461,7 +1534,7 @@ impl App {
                         egui::pos2(content_x + 4.0, fy + UI_UNIT_Y * 0.5),
                         egui::Align2::LEFT_CENTER,
                         *label,
-                        egui::FontId::proportional(11.0),
+                        egui::FontId::proportional(13.0),
                         text_color,
                     );
 
@@ -1473,7 +1546,7 @@ impl App {
                             egui::pos2(fx + 10.0, fy + UI_UNIT_Y * 0.5),
                             egui::Align2::LEFT_CENTER,
                             axis_names[col],
-                            egui::FontId::proportional(9.0),
+                            egui::FontId::proportional(11.0),
                             axis_colors[col],
                         );
                         let val_str = if *label == "Rotation" {
@@ -1485,7 +1558,7 @@ impl App {
                             egui::pos2(fx + field_w * 0.5 + 4.0, fy + UI_UNIT_Y * 0.5),
                             egui::Align2::CENTER_CENTER,
                             val_str,
-                            egui::FontId::proportional(11.0),
+                            egui::FontId::proportional(13.0),
                             text_color,
                         );
                     }
@@ -1500,7 +1573,7 @@ impl App {
             egui::pos2(content_x + 22.0, py + HEADERY * 0.5),
             egui::Align2::LEFT_CENTER,
             &format!("{} Relations", tri),
-            egui::FontId::proportional(12.0),
+            egui::FontId::proportional(13.0),
             title_color,
         );
         py += HEADERY;
@@ -1510,7 +1583,7 @@ impl App {
                 egui::pos2(content_x + 12.0, py + (UI_UNIT_Y + 8.0) * 0.5),
                 egui::Align2::LEFT_CENTER,
                 "Parent: None",
-                egui::FontId::proportional(11.0),
+                egui::FontId::proportional(13.0),
                 text_color,
             );
             py += UI_UNIT_Y + 8.0;
@@ -1522,7 +1595,7 @@ impl App {
             egui::pos2(content_x + 22.0, py + HEADERY * 0.5),
             egui::Align2::LEFT_CENTER,
             &format!("{} Collections", tri),
-            egui::FontId::proportional(12.0),
+            egui::FontId::proportional(13.0),
             title_color,
         );
 
@@ -1532,7 +1605,7 @@ impl App {
             egui::pos2(28.0, tl_y + HEADERY * 0.5),
             egui::Align2::LEFT_CENTER,
             "Timeline",
-            egui::FontId::proportional(11.0),
+            egui::FontId::proportional(13.0),
             title_color,
         );
 
@@ -1540,7 +1613,7 @@ impl App {
             egui::pos2(w - 80.0, tl_y + HEADERY * 0.5),
             egui::Align2::RIGHT_CENTER,
             "Playback  Keying  View",
-            egui::FontId::proportional(10.0),
+            egui::FontId::proportional(13.0),
             text_color,
         );
 
@@ -1555,7 +1628,7 @@ impl App {
                     egui::pos2(x, scrub_y + 2.0),
                     egui::Align2::CENTER_TOP,
                     format!("{f}"),
-                    egui::FontId::proportional(9.0),
+                    egui::FontId::proportional(11.0),
                     text_color,
                 );
             }
@@ -1582,14 +1655,14 @@ impl App {
                 egui::pos2(bx + 20.0, transport_y + UI_UNIT_Y * 0.5),
                 egui::Align2::LEFT_CENTER,
                 "Frame:",
-                egui::FontId::proportional(11.0),
+                egui::FontId::proportional(13.0),
                 text_color,
             );
             painter.text(
                 egui::pos2(bx + 70.0, transport_y + UI_UNIT_Y * 0.5),
                 egui::Align2::CENTER_CENTER,
                 format!("{}", self.current_frame),
-                egui::FontId::proportional(11.0),
+                egui::FontId::proportional(13.0),
                 text_color,
             );
 
@@ -1597,14 +1670,14 @@ impl App {
                 egui::pos2(bx + 120.0, transport_y + UI_UNIT_Y * 0.5),
                 egui::Align2::LEFT_CENTER,
                 "Start:",
-                egui::FontId::proportional(11.0),
+                egui::FontId::proportional(13.0),
                 text_color,
             );
             painter.text(
                 egui::pos2(bx + 170.0, transport_y + UI_UNIT_Y * 0.5),
                 egui::Align2::CENTER_CENTER,
                 format!("{}", self.start_frame),
-                egui::FontId::proportional(11.0),
+                egui::FontId::proportional(13.0),
                 text_color,
             );
 
@@ -1612,14 +1685,14 @@ impl App {
                 egui::pos2(bx + 200.0, transport_y + UI_UNIT_Y * 0.5),
                 egui::Align2::LEFT_CENTER,
                 "End:",
-                egui::FontId::proportional(11.0),
+                egui::FontId::proportional(13.0),
                 text_color,
             );
             painter.text(
                 egui::pos2(bx + 250.0, transport_y + UI_UNIT_Y * 0.5),
                 egui::Align2::CENTER_CENTER,
                 format!("{}", self.end_frame),
-                egui::FontId::proportional(11.0),
+                egui::FontId::proportional(13.0),
                 text_color,
             );
         }
@@ -1633,10 +1706,10 @@ impl App {
         // Grid
         {
             let center = vp_rect.center();
-            let grid_extent = 200.0;
-            let grid_spacing = 20.0;
+            let grid_extent = 400.0;
+            let grid_spacing = 50.0;
             let steps = (grid_extent / grid_spacing) as i32;
-            let grid_color = egui::Color32::from_rgba_premultiplied(84, 84, 84, 128);
+            let grid_color = egui::Color32::from_rgba_premultiplied(84, 84, 84, 100);
 
             for i in -steps..=steps {
                 let y = center.y + i as f32 * grid_spacing;
@@ -1687,34 +1760,34 @@ impl App {
 
         // Navigation gizmo
         {
-            let gizmo_origin = vp_rect.left_bottom() + egui::vec2(40.0, -40.0);
-            let axis_len = 24.0;
+            let gizmo_origin = vp_rect.left_bottom() + egui::vec2(50.0, -50.0);
+            let axis_len = 40.0;
             let axis_x_color = egui::Color32::from_rgb(214, 67, 67);
             let axis_y_color = egui::Color32::from_rgb(104, 188, 80);
             let axis_z_color = egui::Color32::from_rgb(67, 133, 214);
 
-            painter.circle_filled(gizmo_origin, 30.0, egui::Color32::from_rgba_premultiplied(30, 30, 30, 150));
+            painter.circle_filled(gizmo_origin, 48.0, egui::Color32::from_rgba_premultiplied(30, 30, 30, 150));
 
             painter.line_segment(
                 [gizmo_origin, gizmo_origin + egui::vec2(axis_len, 0.0)],
                 egui::Stroke::new(2.5, axis_x_color),
             );
             painter.circle_filled(gizmo_origin + egui::vec2(axis_len + 3.0, 0.0), 4.0, axis_x_color);
-            painter.text(gizmo_origin + egui::vec2(axis_len + 3.0, 0.0), egui::Align2::CENTER_CENTER, "X", egui::FontId::proportional(8.0), egui::Color32::WHITE);
+            painter.text(gizmo_origin + egui::vec2(axis_len + 3.0, 0.0), egui::Align2::CENTER_CENTER, "X", egui::FontId::proportional(10.0), egui::Color32::WHITE);
 
             painter.line_segment(
                 [gizmo_origin, gizmo_origin + egui::vec2(0.0, -axis_len)],
                 egui::Stroke::new(2.5, axis_y_color),
             );
             painter.circle_filled(gizmo_origin + egui::vec2(0.0, -axis_len - 3.0), 4.0, axis_y_color);
-            painter.text(gizmo_origin + egui::vec2(0.0, -axis_len - 3.0), egui::Align2::CENTER_CENTER, "Y", egui::FontId::proportional(8.0), egui::Color32::WHITE);
+            painter.text(gizmo_origin + egui::vec2(0.0, -axis_len - 3.0), egui::Align2::CENTER_CENTER, "Y", egui::FontId::proportional(10.0), egui::Color32::WHITE);
 
             painter.line_segment(
                 [gizmo_origin, gizmo_origin + egui::vec2(-axis_len * 0.55, axis_len * 0.35)],
                 egui::Stroke::new(2.5, axis_z_color),
             );
             painter.circle_filled(gizmo_origin + egui::vec2(-axis_len * 0.55 - 2.0, axis_len * 0.35 + 2.0), 4.0, axis_z_color);
-            painter.text(gizmo_origin + egui::vec2(-axis_len * 0.55 - 2.0, axis_len * 0.35 + 2.0), egui::Align2::CENTER_CENTER, "Z", egui::FontId::proportional(8.0), egui::Color32::WHITE);
+            painter.text(gizmo_origin + egui::vec2(-axis_len * 0.55 - 2.0, axis_len * 0.35 + 2.0), egui::Align2::CENTER_CENTER, "Z", egui::FontId::proportional(10.0), egui::Color32::WHITE);
 
             painter.circle_filled(gizmo_origin, 3.0, egui::Color32::from_rgb(180, 180, 180));
         }
@@ -1724,7 +1797,7 @@ impl App {
             vp_rect.right_bottom() + egui::vec2(-10.0, -8.0),
             egui::Align2::RIGHT_BOTTOM,
             "Verts: 8 | Faces: 6 | Tris: 12 | Objects: 1/3",
-            egui::FontId::proportional(10.0),
+            egui::FontId::proportional(13.0),
             egui::Color32::from_rgb(140, 140, 140),
         );
 
@@ -1753,7 +1826,7 @@ impl App {
         let vp_height = vp_rect.height();
         let aspect = if vp_height > 0.0 { vp_width / vp_height } else { 1.0 };
 
-        let view = mat4_translate(0.0, 0.0, -3.0);
+        let view = mat4_translate(0.0, 0.0, -5.0);
         let proj = mat4_perspective(std::f32::consts::FRAC_PI_4, aspect, 0.1, 100.0);
         let mv = mat4_mul(&view, &model);
         let mvp = mat4_mul(&proj, &mv);
@@ -1869,9 +1942,9 @@ impl App {
                     resolve_target: None,
                     ops: wgpu::Operations {
                         load: wgpu::LoadOp::Clear(wgpu::Color {
-                            r: 61.0 / 255.0,
-                            g: 61.0 / 255.0,
-                            b: 61.0 / 255.0,
+                            r: 51.0 / 255.0,
+                            g: 51.0 / 255.0,
+                            b: 51.0 / 255.0,
                             a: 1.0,
                         }),
                         store: wgpu::StoreOp::Store,

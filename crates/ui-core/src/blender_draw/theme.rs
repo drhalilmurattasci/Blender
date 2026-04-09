@@ -403,12 +403,12 @@ pub mod view3d {
 
 /// Outliner space colors.
 pub mod outliner {
-    pub const BACK: [u8; 4] = [48, 48, 48, 255];
-    pub const HEADER: [u8; 4] = [48, 48, 48, 179];
-    pub const PANEL: [u8; 4] = [48, 48, 48, 255];
+    pub const BACK: [u8; 4] = [40, 40, 40, 255];
+    pub const HEADER: [u8; 4] = [40, 40, 40, 179];
+    pub const PANEL: [u8; 4] = [40, 40, 40, 255];
     pub const SELECTED: [u8; 4] = [76, 97, 128, 255];
     pub const ACTIVE: [u8; 4] = [56, 73, 97, 255];
-    pub const ROW_ALT: [u8; 4] = [44, 44, 44, 255];
+    pub const ROW_ALT: [u8; 4] = [36, 36, 36, 255];
     pub const MATCH: [u8; 4] = [45, 70, 100, 255];
 }
 
