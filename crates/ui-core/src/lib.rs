@@ -3,6 +3,7 @@
 //! Core UI framework for the Forge3D editor: widgets, layout engine,
 //! operators, theming, input/keymap handling, and 2D painting.
 
+pub mod blender_draw;
 pub mod input;
 pub mod keymap;
 pub mod layout;

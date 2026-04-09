@@ -998,6 +998,7 @@ name = "forge3d-ui-core"
 version = "0.1.0"
 dependencies = [
  "ahash",
+ "bitflags 2.11.0",
  "forge3d-dna",
  "forge3d-gpu",
  "forge3d-math",

@@ -14,3 +14,4 @@ forge3d-dna = { path = "../dna", package = "forge3d-dna" }
 thiserror = { workspace = true }
 ahash = { workspace = true }
 smallvec = { workspace = true }
+bitflags = { workspace = true }
