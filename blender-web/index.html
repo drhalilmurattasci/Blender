@@ -1,0 +1,1613 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Blender</title>
+<style>
+/* ══════════════════════════════════════════════════════════════
+   BLENDER 4.x DEFAULT THEME — CSS
+   Colors from userdef_default_theme.c
+   ══════════════════════════════════════════════════════════════ */
+
+/* ── Reset & Base ─────────────────────────────────────────── */
+*, *::before, *::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  background: #3D3D3D;               /* Panel background */
+  font-family: "Inter", "DejaVu Sans", -apple-system, sans-serif;
+  font-size: 12px;
+  color: #E6E6E6;                    /* Text color */
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: #282828; }
+::-webkit-scrollbar-thumb { background: #555; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #666; }
+
+button, input, select {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: none;
+  outline: none;
+}
+
+/* ── App Grid Layout ──────────────────────────────────────── */
+#app {
+  display: grid;
+  width: 100%;
+  height: 100%;
+  grid-template-rows: 26px 1fr 32px 20px;
+  grid-template-columns: 40px 1fr 300px;
+  grid-template-areas:
+    "header   header   header"
+    "toolbar  viewport sidebar"
+    "timeline timeline timeline"
+    "status   status   status";
+}
+
+/* ── Top Header Bar (26px) ────────────────────────────────── */
+#header {
+  grid-area: header;
+  background: #303030;               /* Header bg */
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid #242424;  /* Separator */
+  user-select: none;
+}
+
+#header .logo {
+  display: flex;
+  align-items: center;
+  padding: 0 10px;
+  gap: 5px;
+}
+
+#header .logo svg {
+  width: 16px;
+  height: 16px;
+}
+
+#header .menus {
+  display: flex;
+  gap: 0;
+}
+
+#header .menus button {
+  padding: 0 10px;
+  height: 26px;
+  line-height: 26px;
+  cursor: pointer;
+  position: relative;
+  font-size: 12px;
+}
+
+#header .menus button:hover {
+  background: #505050;
+}
+
+/* Dropdown menus */
+.menu-dropdown {
+  position: fixed;
+  background: #3D3D3D;
+  border: 1px solid #242424;
+  min-width: 200px;
+  z-index: 100;
+  display: none;
+  flex-direction: column;
+  box-shadow: 2px 4px 12px rgba(0, 0, 0, 0.5);
+  padding: 4px 0;
+  border-radius: 0 0 4px 4px;
+}
+
+.menu-dropdown.open {
+  display: flex;
+}
+
+.menu-dropdown .item {
+  padding: 5px 24px;
+  cursor: pointer;
+  white-space: nowrap;
+  font-size: 12px;
+}
+
+.menu-dropdown .item:hover {
+  background: #4772B3;               /* Widget selected */
+}
+
+.menu-dropdown .shortcut {
+  float: right;
+  color: #888;
+  margin-left: 30px;
+}
+
+.menu-dropdown .sep {
+  height: 1px;
+  background: #242424;
+  margin: 3px 8px;
+}
+
+/* Workspace tabs */
+.workspace-tabs {
+  display: flex;
+  margin-left: auto;
+  margin-right: 8px;
+  gap: 1px;
+}
+
+.workspace-tabs button {
+  padding: 0 12px;
+  height: 22px;
+  line-height: 22px;
+  background: #3D3D3D;
+  border-radius: 4px 4px 0 0;
+  cursor: pointer;
+  font-size: 11px;
+  color: #CCC;
+}
+
+.workspace-tabs button:hover {
+  background: #505050;
+  color: #EEE;
+}
+
+.workspace-tabs button.active {
+  background: #505050;               /* Active workspace */
+  color: #FFFFFF;                    /* Text highlight */
+}
+
+/* ── Left Toolbar (40px wide) ─────────────────────────────── */
+#toolbar {
+  grid-area: toolbar;
+  background: #3D3D3D;
+  border-right: 1px solid #242424;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 4px;
+  gap: 2px;
+  overflow-y: auto;
+}
+
+.tool-btn {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  cursor: pointer;
+  color: #CCC;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.tool-btn:hover {
+  background: #606060;               /* Hover highlight */
+}
+
+.tool-btn.active {
+  background: #4772B3;               /* Widget selected */
+  color: #FFF;
+}
+
+/* ── Viewport Area ────────────────────────────────────────── */
+#viewport {
+  grid-area: viewport;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+#viewport-header {
+  height: 26px;
+  background: #303030;
+  display: flex;
+  align-items: center;
+  padding: 0 8px;
+  gap: 6px;
+  border-bottom: 1px solid #242424;
+  font-size: 11px;
+  flex-shrink: 0;
+  user-select: none;
+}
+
+#viewport-header select {
+  background: #454545;
+  padding: 1px 6px;
+  border-radius: 3px;
+  cursor: pointer;
+  height: 20px;
+  color: #E6E6E6;
+}
+
+.vp-sep {
+  width: 1px;
+  height: 16px;
+  background: #545454;
+  flex-shrink: 0;
+}
+
+.vp-btn {
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.vp-btn:hover {
+  background: #606060;
+}
+
+#canvas-wrap {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+  background: #393939;               /* Viewport bg */
+}
+
+#canvas-wrap canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* Viewport overlays */
+.vp-overlay {
+  position: absolute;
+  pointer-events: none;
+  color: #C0C0C0;
+  font-size: 11px;
+}
+
+#vp-topleft {
+  top: 6px;
+  left: 8px;
+  line-height: 1.6;
+}
+
+#vp-gizmo {
+  top: 8px;
+  right: 8px;
+  width: 60px;
+  height: 60px;
+}
+
+#vp-gizmo canvas {
+  width: 60px;
+  height: 60px;
+}
+
+/* ── Right Sidebar ────────────────────────────────────────── */
+#sidebar {
+  grid-area: sidebar;
+  display: flex;
+  flex-direction: column;
+  border-left: 1px solid #242424;
+  min-height: 0;
+}
+
+/* Outliner panel */
+#outliner {
+  background: #282828;               /* Outliner bg */
+  flex: 0 0 auto;
+  min-height: 140px;
+  max-height: 40%;
+  display: flex;
+  flex-direction: column;
+  border-bottom: 1px solid #242424;
+}
+
+#outliner-header {
+  height: 26px;
+  background: #303030;
+  display: flex;
+  align-items: center;
+  padding: 0 8px;
+  font-size: 11px;
+  border-bottom: 1px solid #242424;
+  flex-shrink: 0;
+  gap: 6px;
+}
+
+#outliner-header span {
+  flex: 1;
+}
+
+#outliner-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 2px 0;
+}
+
+.ol-row {
+  display: flex;
+  align-items: center;
+  height: 20px;
+  padding: 0 6px;
+  cursor: pointer;
+  gap: 4px;
+  font-size: 11px;
+}
+
+.ol-row:hover {
+  background: #3A3A3A;
+}
+
+.ol-row.selected {
+  background: #4772B3;               /* Selection highlight */
+  color: #FFF;
+}
+
+.ol-toggle {
+  width: 14px;
+  text-align: center;
+  font-size: 9px;
+  cursor: pointer;
+  color: #AAA;
+}
+
+.ol-icon {
+  width: 14px;
+  text-align: center;
+  font-size: 10px;
+}
+
+.ol-name {
+  flex: 1;
+}
+
+.ol-vis {
+  width: 16px;
+  text-align: center;
+  cursor: pointer;
+  font-size: 10px;
+  color: #888;
+}
+
+.ol-vis:hover {
+  color: #FFF;
+}
+
+/* Properties panel */
+#properties {
+  background: #303030;               /* Properties bg */
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+#props-wrap {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+#props-tabbar {
+  width: 28px;
+  background: #2A2A2A;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 4px;
+  gap: 1px;
+  flex-shrink: 0;
+  border-right: 1px solid #242424;
+}
+
+.ptab {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 10px;
+  color: #AAA;
+}
+
+.ptab:hover {
+  background: #505050;
+  color: #DDD;
+}
+
+.ptab.active {
+  background: #4772B3;
+  color: #FFF;
+}
+
+#props-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 4px 8px 8px 8px;
+}
+
+/* Property sections */
+.prop-section {
+  margin-bottom: 2px;
+}
+
+.prop-section-header {
+  display: flex;
+  align-items: center;
+  height: 22px;
+  cursor: pointer;
+  padding: 0 4px;
+  border-radius: 3px;
+  gap: 4px;
+  font-size: 11px;
+  color: #EEEEEE;                    /* Title color */
+}
+
+.prop-section-header:hover {
+  background: #454545;
+}
+
+.prop-section-header .arrow {
+  width: 12px;
+  font-size: 9px;
+  color: #AAA;
+}
+
+.prop-section-body {
+  padding: 4px 0 4px 16px;
+}
+
+.prop-row {
+  display: flex;
+  align-items: center;
+  height: 22px;
+  gap: 4px;
+  font-size: 11px;
+}
+
+.prop-label {
+  width: 70px;
+  color: #B0B0B0;
+  flex-shrink: 0;
+}
+
+.prop-inputs {
+  display: flex;
+  flex: 1;
+  gap: 2px;
+}
+
+/* Number input fields (dark rounded rects) */
+.prop-input {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  height: 20px;
+  background: #545454;               /* Widget inner */
+  border-radius: 3px;
+  overflow: hidden;
+  cursor: ew-resize;
+  user-select: none;
+}
+
+.prop-input:hover {
+  background: #606060;
+}
+
+.prop-input .axis-tag {
+  width: 20px;
+  text-align: center;
+  font-size: 10px;
+  font-weight: 600;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #FFF;
+}
+
+.prop-input .axis-tag.x { background: #CC3333; }  /* X axis color */
+.prop-input .axis-tag.y { background: #33CC33; }  /* Y axis color */
+.prop-input .axis-tag.z { background: #3366CC; }  /* Z axis color */
+
+.prop-input .val {
+  flex: 1;
+  text-align: center;
+  font-size: 11px;
+  padding: 0 4px;
+}
+
+/* ── Timeline (32px) ──────────────────────────────────────── */
+#timeline {
+  grid-area: timeline;
+  background: #303030;
+  display: flex;
+  align-items: center;
+  border-top: 1px solid #242424;
+  padding: 0 8px;
+  gap: 6px;
+  font-size: 11px;
+  user-select: none;
+}
+
+#timeline .tl-label {
+  color: #B0B0B0;
+  white-space: nowrap;
+}
+
+#timeline .tl-btn {
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 12px;
+  flex-shrink: 0;
+}
+
+#timeline .tl-btn:hover {
+  background: #505050;
+}
+
+#timeline .tl-btn.playing {
+  color: #5699F0;
+}
+
+.tl-input {
+  width: 48px;
+  height: 18px;
+  background: #545454;
+  border-radius: 3px;
+  text-align: center;
+  font-size: 11px;
+  padding: 0 2px;
+  color: #E6E6E6;
+}
+
+#frame-slider {
+  flex: 1;
+  height: 4px;
+  -webkit-appearance: none;
+  appearance: none;
+  background: #454545;
+  border-radius: 2px;
+  cursor: pointer;
+  margin: 0 4px;
+  min-width: 60px;
+}
+
+#frame-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 8px;
+  height: 16px;
+  background: #7A7A7A;
+  border-radius: 2px;
+  cursor: pointer;
+}
+
+/* ── Status Bar (20px) ────────────────────────────────────── */
+#statusbar {
+  grid-area: status;
+  background: #3D3D3D;
+  display: flex;
+  align-items: center;
+  padding: 0 10px;
+  font-size: 11px;
+  color: #B0B0B0;
+  border-top: 1px solid #242424;
+  gap: 20px;
+}
+</style>
+</head>
+<body>
+<div id="app">
+
+<!-- ═══════════════════════════════════════════════════════════
+     HEADER BAR
+     ═══════════════════════════════════════════════════════════ -->
+<div id="header">
+  <div class="logo">
+    <svg viewBox="0 0 16 16">
+      <circle cx="8" cy="8" r="7" fill="none" stroke="#E87D0D" stroke-width="1.5"/>
+      <circle cx="8" cy="8" r="2.5" fill="#E87D0D"/>
+    </svg>
+    <span style="font-weight:600;color:#EEE">Blender</span>
+  </div>
+  <div class="menus">
+    <button data-menu="file">File</button>
+    <button data-menu="edit">Edit</button>
+    <button data-menu="render">Render</button>
+    <button data-menu="window">Window</button>
+    <button data-menu="help">Help</button>
+  </div>
+  <div class="workspace-tabs">
+    <button class="active" data-ws="Layout">Layout</button>
+    <button data-ws="Modeling">Modeling</button>
+    <button data-ws="Sculpting">Sculpting</button>
+    <button data-ws="UV Editing">UV Editing</button>
+    <button data-ws="Texture Paint">Texture Paint</button>
+    <button data-ws="Shading">Shading</button>
+    <button data-ws="Animation">Animation</button>
+    <button data-ws="Rendering">Rendering</button>
+    <button data-ws="Compositing">Compositing</button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     LEFT TOOLBAR
+     ═══════════════════════════════════════════════════════════ -->
+<div id="toolbar">
+  <div class="tool-btn active" title="Select Box (W)">&#9701;</div>
+  <div class="tool-btn" title="Cursor">&#10010;</div>
+  <div class="tool-btn" title="Move (G)">&#8651;</div>
+  <div class="tool-btn" title="Rotate (R)">&#8634;</div>
+  <div class="tool-btn" title="Scale (S)">&#8596;</div>
+  <div class="tool-btn" title="Transform">&#9638;</div>
+  <div class="tool-btn" title="Annotate">&#9998;</div>
+  <div class="tool-btn" title="Measure">&#8967;</div>
+  <div class="tool-btn" title="Add (Shift+A)">&#10010;</div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     3D VIEWPORT
+     ═══════════════════════════════════════════════════════════ -->
+<div id="viewport">
+  <div id="viewport-header">
+    <select id="mode-select">
+      <option>Object Mode</option>
+      <option>Edit Mode</option>
+      <option>Sculpt Mode</option>
+      <option>Vertex Paint</option>
+      <option>Weight Paint</option>
+      <option>Texture Paint</option>
+    </select>
+    <div class="vp-sep"></div>
+    <span>Global</span>
+    <div class="vp-sep"></div>
+    <div class="vp-btn" title="Pivot Point">&#9678;</div>
+    <div class="vp-btn" title="Snap">&#9874;</div>
+    <div class="vp-sep"></div>
+    <div class="vp-btn" title="Wireframe">&#9675;</div>
+    <div class="vp-btn" title="Solid">&#9679;</div>
+    <div class="vp-btn" title="Material">&#9678;</div>
+    <div class="vp-btn" title="Rendered">&#9899;</div>
+    <span style="flex:1"></span>
+    <span style="color:#888;font-size:10px">Viewport Shading</span>
+  </div>
+  <div id="canvas-wrap">
+    <canvas id="glcanvas"></canvas>
+    <div class="vp-overlay" id="vp-topleft">
+      <div>User Perspective</div>
+      <div style="color:#888">Collection | Cube &nbsp; 1.0m</div>
+    </div>
+    <div class="vp-overlay" id="vp-gizmo">
+      <canvas id="gizmo-canvas" width="120" height="120"></canvas>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     RIGHT SIDEBAR: OUTLINER + PROPERTIES
+     ═══════════════════════════════════════════════════════════ -->
+<div id="sidebar">
+
+  <!-- Outliner -->
+  <div id="outliner">
+    <div id="outliner-header">
+      <span>Outliner</span>
+      <span style="color:#888;font-size:10px;flex:0">Display Mode: View Layer</span>
+    </div>
+    <div id="outliner-body">
+      <div class="ol-row" data-expand="scene">
+        <span class="ol-toggle" id="scene-toggle">&#9660;</span>
+        <span class="ol-icon" style="color:#AAA">&#9651;</span>
+        <span class="ol-name">Scene Collection</span>
+      </div>
+      <div id="scene-children">
+        <div class="ol-row selected" data-obj="Cube" style="padding-left:24px">
+          <span class="ol-icon" style="color:#4CBB4C">&#9646;</span>
+          <span class="ol-name">Cube</span>
+          <span class="ol-vis" title="Visibility">&#128065;</span>
+          <span class="ol-vis" title="Selectability">&#9670;</span>
+        </div>
+        <div class="ol-row" data-obj="Camera" style="padding-left:24px">
+          <span class="ol-icon" style="color:#AAA">&#9654;</span>
+          <span class="ol-name">Camera</span>
+          <span class="ol-vis" title="Visibility">&#128065;</span>
+          <span class="ol-vis" title="Selectability">&#9670;</span>
+        </div>
+        <div class="ol-row" data-obj="Light" style="padding-left:24px">
+          <span class="ol-icon" style="color:#F5D76E">&#9679;</span>
+          <span class="ol-name">Light</span>
+          <span class="ol-vis" title="Visibility">&#128065;</span>
+          <span class="ol-vis" title="Selectability">&#9670;</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Properties Panel -->
+  <div id="properties">
+    <div id="props-wrap">
+      <div id="props-tabbar">
+        <div class="ptab" title="Tool">T</div>
+        <div class="ptab" title="Scene">S</div>
+        <div class="ptab" title="World">W</div>
+        <div class="ptab active" title="Object Properties">O</div>
+        <div class="ptab" title="Modifiers">M</div>
+        <div class="ptab" title="Particles">P</div>
+        <div class="ptab" title="Physics">Ph</div>
+        <div class="ptab" title="Constraints">C</div>
+        <div class="ptab" title="Object Data">D</div>
+      </div>
+      <div id="props-content">
+
+        <!-- Transform Section (expanded) -->
+        <div class="prop-section" data-section="transform">
+          <div class="prop-section-header" data-collapse="transform">
+            <span class="arrow">&#9660;</span>
+            <span>Transform</span>
+          </div>
+          <div class="prop-section-body" id="sec-transform">
+            <div class="prop-row">
+              <span class="prop-label">Location</span>
+              <div class="prop-inputs">
+                <div class="prop-input" data-prop="locX"><span class="axis-tag x">X</span><span class="val" id="locX">0.000</span></div>
+                <div class="prop-input" data-prop="locY"><span class="axis-tag y">Y</span><span class="val" id="locY">0.000</span></div>
+                <div class="prop-input" data-prop="locZ"><span class="axis-tag z">Z</span><span class="val" id="locZ">0.000</span></div>
+              </div>
+            </div>
+            <div class="prop-row">
+              <span class="prop-label">Rotation</span>
+              <div class="prop-inputs">
+                <div class="prop-input" data-prop="rotX"><span class="axis-tag x">X</span><span class="val" id="rotX">0.000</span></div>
+                <div class="prop-input" data-prop="rotY"><span class="axis-tag y">Y</span><span class="val" id="rotY">0.000</span></div>
+                <div class="prop-input" data-prop="rotZ"><span class="axis-tag z">Z</span><span class="val" id="rotZ">0.000</span></div>
+              </div>
+            </div>
+            <div class="prop-row">
+              <span class="prop-label">Scale</span>
+              <div class="prop-inputs">
+                <div class="prop-input" data-prop="scaleX"><span class="axis-tag x">X</span><span class="val" id="scaleX">1.000</span></div>
+                <div class="prop-input" data-prop="scaleY"><span class="axis-tag y">Y</span><span class="val" id="scaleY">1.000</span></div>
+                <div class="prop-input" data-prop="scaleZ"><span class="axis-tag z">Z</span><span class="val" id="scaleZ">1.000</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Delta Transform (collapsed) -->
+        <div class="prop-section">
+          <div class="prop-section-header" data-collapse="delta">
+            <span class="arrow">&#9654;</span>
+            <span>Delta Transform</span>
+          </div>
+          <div class="prop-section-body" style="display:none" id="sec-delta">
+            <div class="prop-row">
+              <span class="prop-label">Delta Loc</span>
+              <div class="prop-inputs">
+                <div class="prop-input"><span class="axis-tag x">X</span><span class="val">0.000</span></div>
+                <div class="prop-input"><span class="axis-tag y">Y</span><span class="val">0.000</span></div>
+                <div class="prop-input"><span class="axis-tag z">Z</span><span class="val">0.000</span></div>
+              </div>
+            </div>
+            <div class="prop-row">
+              <span class="prop-label">Delta Rot</span>
+              <div class="prop-inputs">
+                <div class="prop-input"><span class="axis-tag x">X</span><span class="val">0.000</span></div>
+                <div class="prop-input"><span class="axis-tag y">Y</span><span class="val">0.000</span></div>
+                <div class="prop-input"><span class="axis-tag z">Z</span><span class="val">0.000</span></div>
+              </div>
+            </div>
+            <div class="prop-row">
+              <span class="prop-label">Delta Scale</span>
+              <div class="prop-inputs">
+                <div class="prop-input"><span class="axis-tag x">X</span><span class="val">1.000</span></div>
+                <div class="prop-input"><span class="axis-tag y">Y</span><span class="val">1.000</span></div>
+                <div class="prop-input"><span class="axis-tag z">Z</span><span class="val">1.000</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Relations (collapsed) -->
+        <div class="prop-section">
+          <div class="prop-section-header" data-collapse="relations">
+            <span class="arrow">&#9654;</span>
+            <span>Relations</span>
+          </div>
+          <div class="prop-section-body" style="display:none" id="sec-relations">
+            <div class="prop-row"><span class="prop-label" style="width:100%;color:#888">No parent</span></div>
+          </div>
+        </div>
+
+        <!-- Collections (collapsed) -->
+        <div class="prop-section">
+          <div class="prop-section-header" data-collapse="collections">
+            <span class="arrow">&#9654;</span>
+            <span>Collections</span>
+          </div>
+          <div class="prop-section-body" style="display:none" id="sec-collections">
+            <div class="prop-row"><span class="prop-label" style="width:100%">Scene Collection</span></div>
+          </div>
+        </div>
+
+        <!-- Instancing (collapsed) -->
+        <div class="prop-section">
+          <div class="prop-section-header" data-collapse="instancing">
+            <span class="arrow">&#9654;</span>
+            <span>Instancing</span>
+          </div>
+          <div class="prop-section-body" style="display:none" id="sec-instancing">
+            <div class="prop-row"><span class="prop-label" style="width:100%;color:#888">None</span></div>
+          </div>
+        </div>
+
+        <!-- Visibility (collapsed) -->
+        <div class="prop-section">
+          <div class="prop-section-header" data-collapse="visibility">
+            <span class="arrow">&#9654;</span>
+            <span>Visibility</span>
+          </div>
+          <div class="prop-section-body" style="display:none" id="sec-visibility">
+            <div class="prop-row"><span class="prop-label" style="width:100%">Show in Viewports</span></div>
+            <div class="prop-row"><span class="prop-label" style="width:100%">Show in Renders</span></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     TIMELINE BAR
+     ═══════════════════════════════════════════════════════════ -->
+<div id="timeline">
+  <span class="tl-label">Dope Sheet</span>
+  <div class="vp-sep"></div>
+  <span class="tl-label">Marker</span>
+  <span class="tl-label">Playback</span>
+  <div class="vp-sep"></div>
+  <div class="tl-btn" title="Jump to Start" id="tl-start">&#9198;</div>
+  <div class="tl-btn" title="Reverse" id="tl-rev">&#9194;</div>
+  <div class="tl-btn" title="Play / Pause (Space)" id="tl-play">&#9654;</div>
+  <div class="tl-btn" title="Forward" id="tl-fwd">&#9193;</div>
+  <div class="tl-btn" title="Jump to End" id="tl-end">&#9197;</div>
+  <div class="vp-sep"></div>
+  <span class="tl-label">Frame:</span>
+  <input class="tl-input" id="frame-num" value="1" type="number" min="1" max="250">
+  <input type="range" id="frame-slider" min="1" max="250" value="1">
+  <span class="tl-label">Start:</span>
+  <input class="tl-input" value="1" readonly>
+  <span class="tl-label">End:</span>
+  <input class="tl-input" value="250" readonly>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     STATUS BAR
+     ═══════════════════════════════════════════════════════════ -->
+<div id="statusbar">
+  <span>&#9679; Object Mode</span>
+  <span style="flex:1"></span>
+  <span>Verts:8 &nbsp; Faces:6 &nbsp; Tris:12</span>
+</div>
+
+</div><!-- end #app -->
+
+<!-- ═══════════════════════════════════════════════════════════
+     DROPDOWN MENUS (positioned via JS)
+     ═══════════════════════════════════════════════════════════ -->
+<div class="menu-dropdown" id="menu-file">
+  <div class="item">New<span class="shortcut">Ctrl+N</span></div>
+  <div class="item">Open...<span class="shortcut">Ctrl+O</span></div>
+  <div class="item">Open Recent</div>
+  <div class="sep"></div>
+  <div class="item">Revert</div>
+  <div class="sep"></div>
+  <div class="item">Save<span class="shortcut">Ctrl+S</span></div>
+  <div class="item">Save As...<span class="shortcut">Ctrl+Shift+S</span></div>
+  <div class="item">Save Copy...</div>
+  <div class="sep"></div>
+  <div class="item">Quit<span class="shortcut">Ctrl+Q</span></div>
+</div>
+<div class="menu-dropdown" id="menu-edit">
+  <div class="item">Undo<span class="shortcut">Ctrl+Z</span></div>
+  <div class="item">Redo<span class="shortcut">Ctrl+Shift+Z</span></div>
+  <div class="sep"></div>
+  <div class="item">Preferences...</div>
+</div>
+<div class="menu-dropdown" id="menu-render">
+  <div class="item">Render Image<span class="shortcut">F12</span></div>
+  <div class="item">Render Animation<span class="shortcut">Ctrl+F12</span></div>
+  <div class="item">Render Audio</div>
+</div>
+<div class="menu-dropdown" id="menu-window">
+  <div class="item">New Window</div>
+  <div class="item">Toggle System Console</div>
+</div>
+<div class="menu-dropdown" id="menu-help">
+  <div class="item">Manual</div>
+  <div class="item">Release Notes</div>
+  <div class="sep"></div>
+  <div class="item">About</div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     JAVASCRIPT: INTERACTIONS + WEBGL RENDERER
+     ═══════════════════════════════════════════════════════════ -->
+<script>
+/* ══════════════════════════════════════════════════════════════
+   APPLICATION STATE
+   ══════════════════════════════════════════════════════════════ */
+const state = {
+  locX: 0, locY: 0, locZ: 0,
+  rotX: 0, rotY: 0, rotZ: 0,
+  scaleX: 1, scaleY: 1, scaleZ: 1,
+  frame: 1,
+  playing: false,
+  selectedObj: 'Cube'
+};
+
+/* ══════════════════════════════════════════════════════════════
+   UI INTERACTIONS
+   ══════════════════════════════════════════════════════════════ */
+
+// ── Dropdown Menus ──
+document.querySelectorAll('#header .menus button').forEach(btn => {
+  btn.addEventListener('click', e => {
+    e.stopPropagation();
+    closeMenus();
+    const dd = document.getElementById('menu-' + btn.dataset.menu);
+    if (dd) {
+      const r = btn.getBoundingClientRect();
+      dd.style.left = r.left + 'px';
+      dd.style.top = r.bottom + 'px';
+      dd.classList.add('open');
+    }
+  });
+});
+
+function closeMenus() {
+  document.querySelectorAll('.menu-dropdown').forEach(m => m.classList.remove('open'));
+}
+
+document.addEventListener('click', closeMenus);
+
+// ── Workspace Tabs ──
+document.querySelectorAll('.workspace-tabs button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.workspace-tabs button').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+  });
+});
+
+// ── Left Toolbar Buttons ──
+document.querySelectorAll('.tool-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+  });
+});
+
+// ── Properties Tabs ──
+document.querySelectorAll('.ptab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.ptab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+  });
+});
+
+// ── Collapsible Property Sections ──
+document.querySelectorAll('.prop-section-header').forEach(hdr => {
+  hdr.addEventListener('click', () => {
+    const body = hdr.nextElementSibling;
+    const arrow = hdr.querySelector('.arrow');
+    if (body.style.display === 'none') {
+      body.style.display = '';
+      arrow.innerHTML = '&#9660;';    // down arrow (expanded)
+    } else {
+      body.style.display = 'none';
+      arrow.innerHTML = '&#9654;';    // right arrow (collapsed)
+    }
+  });
+});
+
+// ── Outliner: Scene Collection Toggle ──
+document.getElementById('scene-toggle').addEventListener('click', e => {
+  e.stopPropagation();
+  const ch = document.getElementById('scene-children');
+  const tg = document.getElementById('scene-toggle');
+  if (ch.style.display === 'none') {
+    ch.style.display = '';
+    tg.innerHTML = '&#9660;';
+  } else {
+    ch.style.display = 'none';
+    tg.innerHTML = '&#9654;';
+  }
+});
+
+// ── Outliner: Object Selection ──
+document.querySelectorAll('.ol-row[data-obj]').forEach(row => {
+  row.addEventListener('click', () => {
+    document.querySelectorAll('.ol-row').forEach(r => r.classList.remove('selected'));
+    row.classList.add('selected');
+    state.selectedObj = row.dataset.obj;
+  });
+});
+
+// ── Drag Number Inputs (change property values) ──
+document.querySelectorAll('.prop-input[data-prop]').forEach(inp => {
+  let dragging = false, startX = 0, startVal = 0;
+  const prop = inp.dataset.prop;
+
+  inp.addEventListener('mousedown', e => {
+    dragging = true;
+    startX = e.clientX;
+    startVal = state[prop];
+    document.body.style.cursor = 'ew-resize';
+    e.preventDefault();
+  });
+
+  document.addEventListener('mousemove', e => {
+    if (!dragging) return;
+    const dx = e.clientX - startX;
+    const sensitivity = prop.startsWith('scale') ? 0.005 : 0.01;
+    state[prop] = startVal + dx * sensitivity;
+    document.getElementById(prop).textContent = state[prop].toFixed(3);
+  });
+
+  document.addEventListener('mouseup', () => {
+    if (dragging) {
+      dragging = false;
+      document.body.style.cursor = '';
+    }
+  });
+});
+
+// ── Timeline Controls ──
+const frameNum = document.getElementById('frame-num');
+const frameSlider = document.getElementById('frame-slider');
+const playBtn = document.getElementById('tl-play');
+
+frameSlider.addEventListener('input', () => {
+  state.frame = +frameSlider.value;
+  frameNum.value = state.frame;
+});
+
+frameNum.addEventListener('change', () => {
+  state.frame = Math.max(1, Math.min(250, +frameNum.value));
+  frameSlider.value = state.frame;
+});
+
+playBtn.addEventListener('click', togglePlay);
+
+document.getElementById('tl-start').addEventListener('click', () => {
+  state.frame = 1;
+  syncFrame();
+});
+
+document.getElementById('tl-end').addEventListener('click', () => {
+  state.frame = 250;
+  syncFrame();
+});
+
+function togglePlay() {
+  state.playing = !state.playing;
+  playBtn.classList.toggle('playing', state.playing);
+  playBtn.innerHTML = state.playing ? '&#9646;&#9646;' : '&#9654;';
+}
+
+function syncFrame() {
+  frameNum.value = state.frame;
+  frameSlider.value = state.frame;
+}
+
+// ── Keyboard Shortcuts ──
+document.addEventListener('keydown', e => {
+  if (e.target.tagName === 'INPUT') return; // don't capture when typing in inputs
+  if (e.code === 'Space') {
+    e.preventDefault();
+    togglePlay();
+  }
+  if (e.code === 'Escape') {
+    document.querySelectorAll('.ol-row').forEach(r => r.classList.remove('selected'));
+    state.selectedObj = null;
+    closeMenus();
+  }
+});
+
+/* ══════════════════════════════════════════════════════════════
+   WEBGL 3D VIEWPORT RENDERER
+   ══════════════════════════════════════════════════════════════ */
+
+const canvas = document.getElementById('glcanvas');
+const gl = canvas.getContext('webgl', { antialias: true, alpha: false });
+
+if (!gl) {
+  document.getElementById('canvas-wrap').innerHTML =
+    '<div style="color:#F44;padding:20px;font-size:14px">WebGL is not supported in this browser.</div>';
+}
+
+/* ── Shader Compilation ───────────────────────────────────── */
+
+// Shaded vertex shader (for lit geometry with normals)
+const SHADED_VS = `
+  attribute vec3 aPos;
+  attribute vec3 aNorm;
+  uniform mat4 uMVP;
+  uniform mat4 uModel;
+  varying vec3 vNorm;
+  void main() {
+    vNorm = mat3(uModel) * aNorm;
+    gl_Position = uMVP * vec4(aPos, 1.0);
+  }
+`;
+
+// Shaded fragment shader (simple directional light)
+const SHADED_FS = `
+  precision mediump float;
+  varying vec3 vNorm;
+  uniform vec3 uColor;
+  uniform float uFlat;
+  void main() {
+    if (uFlat > 0.5) {
+      gl_FragColor = vec4(uColor, 1.0);
+      return;
+    }
+    vec3 light = normalize(vec3(0.4, 0.7, 0.5));
+    float d = max(dot(normalize(vNorm), light), 0.0);
+    vec3 c = uColor * (0.35 + 0.65 * d);
+    gl_FragColor = vec4(c, 1.0);
+  }
+`;
+
+// Flat vertex shader (for lines, wireframes, grid)
+const FLAT_VS = `
+  attribute vec3 aPos;
+  uniform mat4 uMVP;
+  void main() {
+    gl_Position = uMVP * vec4(aPos, 1.0);
+  }
+`;
+
+// Flat fragment shader (solid color with alpha)
+const FLAT_FS = `
+  precision mediump float;
+  uniform vec4 uColor;
+  void main() {
+    gl_FragColor = uColor;
+  }
+`;
+
+function compileShader(src, type) {
+  const s = gl.createShader(type);
+  gl.shaderSource(s, src);
+  gl.compileShader(s);
+  if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) {
+    console.error('Shader compile error:', gl.getShaderInfoLog(s));
+    return null;
+  }
+  return s;
+}
+
+function linkProgram(vs, fs) {
+  const p = gl.createProgram();
+  gl.attachShader(p, vs);
+  gl.attachShader(p, fs);
+  gl.linkProgram(p);
+  if (!gl.getProgramParameter(p, gl.LINK_STATUS)) {
+    console.error('Program link error:', gl.getProgramInfoLog(p));
+    return null;
+  }
+  return p;
+}
+
+// Build shader programs
+const shadedProg = linkProgram(
+  compileShader(SHADED_VS, gl.VERTEX_SHADER),
+  compileShader(SHADED_FS, gl.FRAGMENT_SHADER)
+);
+const sp = {
+  aPos:   gl.getAttribLocation(shadedProg, 'aPos'),
+  aNorm:  gl.getAttribLocation(shadedProg, 'aNorm'),
+  uMVP:   gl.getUniformLocation(shadedProg, 'uMVP'),
+  uModel: gl.getUniformLocation(shadedProg, 'uModel'),
+  uColor: gl.getUniformLocation(shadedProg, 'uColor'),
+  uFlat:  gl.getUniformLocation(shadedProg, 'uFlat'),
+};
+
+const flatProg = linkProgram(
+  compileShader(FLAT_VS, gl.VERTEX_SHADER),
+  compileShader(FLAT_FS, gl.FRAGMENT_SHADER)
+);
+const fp = {
+  aPos:   gl.getAttribLocation(flatProg, 'aPos'),
+  uMVP:   gl.getUniformLocation(flatProg, 'uMVP'),
+  uColor: gl.getUniformLocation(flatProg, 'uColor'),
+};
+
+/* ── Geometry Buffers ─────────────────────────────────────── */
+
+// Cube: 6 faces, 4 vertices each, interleaved pos+normal (stride=24 bytes)
+const cubeVerts = new Float32Array([
+  // Front face (+Z)
+  -0.5,-0.5, 0.5,  0, 0, 1,    0.5,-0.5, 0.5,  0, 0, 1,
+   0.5, 0.5, 0.5,  0, 0, 1,   -0.5, 0.5, 0.5,  0, 0, 1,
+  // Back face (-Z)
+   0.5,-0.5,-0.5,  0, 0,-1,   -0.5,-0.5,-0.5,  0, 0,-1,
+  -0.5, 0.5,-0.5,  0, 0,-1,    0.5, 0.5,-0.5,  0, 0,-1,
+  // Top face (+Y)
+  -0.5, 0.5, 0.5,  0, 1, 0,    0.5, 0.5, 0.5,  0, 1, 0,
+   0.5, 0.5,-0.5,  0, 1, 0,   -0.5, 0.5,-0.5,  0, 1, 0,
+  // Bottom face (-Y)
+  -0.5,-0.5,-0.5,  0,-1, 0,    0.5,-0.5,-0.5,  0,-1, 0,
+   0.5,-0.5, 0.5,  0,-1, 0,   -0.5,-0.5, 0.5,  0,-1, 0,
+  // Right face (+X)
+   0.5,-0.5, 0.5,  1, 0, 0,    0.5,-0.5,-0.5,  1, 0, 0,
+   0.5, 0.5,-0.5,  1, 0, 0,    0.5, 0.5, 0.5,  1, 0, 0,
+  // Left face (-X)
+  -0.5,-0.5,-0.5, -1, 0, 0,   -0.5,-0.5, 0.5, -1, 0, 0,
+  -0.5, 0.5, 0.5, -1, 0, 0,   -0.5, 0.5,-0.5, -1, 0, 0,
+]);
+const cubeIdx = new Uint16Array([
+  0,1,2, 0,2,3,     4,5,6, 4,6,7,     8,9,10, 8,10,11,
+  12,13,14, 12,14,15, 16,17,18, 16,18,19, 20,21,22, 20,22,23
+]);
+const cubeVBO = gl.createBuffer();
+gl.bindBuffer(gl.ARRAY_BUFFER, cubeVBO);
+gl.bufferData(gl.ARRAY_BUFFER, cubeVerts, gl.STATIC_DRAW);
+const cubeIBO = gl.createBuffer();
+gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, cubeIBO);
+gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, cubeIdx, gl.STATIC_DRAW);
+
+// Cube wireframe: 12 edges as line pairs
+const h = 0.5;
+const wireVerts = new Float32Array([
+  -h,-h,-h, h,-h,-h,   h,-h,-h, h,h,-h,   h,h,-h, -h,h,-h,   -h,h,-h, -h,-h,-h,
+  -h,-h, h, h,-h, h,   h,-h, h, h,h, h,   h,h, h, -h,h, h,   -h,h, h, -h,-h, h,
+  -h,-h,-h, -h,-h,h,   h,-h,-h, h,-h,h,   h,h,-h, h,h,h,     -h,h,-h, -h,h,h
+]);
+const wireVBO = gl.createBuffer();
+gl.bindBuffer(gl.ARRAY_BUFFER, wireVBO);
+gl.bufferData(gl.ARRAY_BUFFER, wireVerts, gl.STATIC_DRAW);
+
+// Grid floor: 20x20 lines at Y=0
+const gridLines = [];
+for (let i = -10; i <= 10; i++) {
+  gridLines.push(i, 0, -10, i, 0, 10);   // lines along Z
+  gridLines.push(-10, 0, i, 10, 0, i);    // lines along X
+}
+const gridVBO = gl.createBuffer();
+gl.bindBuffer(gl.ARRAY_BUFFER, gridVBO);
+gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(gridLines), gl.STATIC_DRAW);
+const gridVertCount = gridLines.length / 3;
+
+// Axis lines through origin
+const axisVerts = new Float32Array([
+  0,0,0, 4,0,0,    // X axis (red)
+  0,0,0, 0,4,0,    // Y axis (green)
+  0,0,0, 0,0,4     // Z axis (blue, for reference)
+]);
+const axisVBO = gl.createBuffer();
+gl.bindBuffer(gl.ARRAY_BUFFER, axisVBO);
+gl.bufferData(gl.ARRAY_BUFFER, axisVerts, gl.STATIC_DRAW);
+
+// 3D Cursor (small crosshair at origin)
+const cursorVerts = new Float32Array([
+  -0.15,0,0, 0.15,0,0,
+  0,-0.15,0, 0,0.15,0,
+  0,0,-0.15, 0,0,0.15
+]);
+const cursorVBO = gl.createBuffer();
+gl.bindBuffer(gl.ARRAY_BUFFER, cursorVBO);
+gl.bufferData(gl.ARRAY_BUFFER, cursorVerts, gl.STATIC_DRAW);
+
+// Camera wireframe at position (3.5, 2.5, 3.5)
+const camVerts = new Float32Array([
+  // Pyramid from origin to frustum
+  0,0,0, -0.4,-0.3,-0.7,   0,0,0, 0.4,-0.3,-0.7,
+  0,0,0,  0.4, 0.3,-0.7,   0,0,0,-0.4, 0.3,-0.7,
+  // Frustum rectangle
+  -0.4,-0.3,-0.7, 0.4,-0.3,-0.7,   0.4,-0.3,-0.7, 0.4,0.3,-0.7,
+   0.4, 0.3,-0.7,-0.4, 0.3,-0.7,  -0.4, 0.3,-0.7,-0.4,-0.3,-0.7,
+  // Up triangle indicator
+  -0.15,0.3,-0.7, 0,0.5,-0.7,   0,0.5,-0.7, 0.15,0.3,-0.7
+]);
+const camVBO = gl.createBuffer();
+gl.bindBuffer(gl.ARRAY_BUFFER, camVBO);
+gl.bufferData(gl.ARRAY_BUFFER, camVerts, gl.STATIC_DRAW);
+const camVertCount = camVerts.length / 3;
+
+// Light wireframe (point light: two circles + rays)
+const lightPts = [];
+const circleSegs = 16;
+for (let i = 0; i < circleSegs; i++) {
+  const a1 = (i / circleSegs) * Math.PI * 2;
+  const a2 = ((i + 1) / circleSegs) * Math.PI * 2;
+  const r = 0.2;
+  // XY circle
+  lightPts.push(Math.cos(a1)*r, Math.sin(a1)*r, 0);
+  lightPts.push(Math.cos(a2)*r, Math.sin(a2)*r, 0);
+  // YZ circle
+  lightPts.push(0, Math.cos(a1)*r, Math.sin(a1)*r);
+  lightPts.push(0, Math.cos(a2)*r, Math.sin(a2)*r);
+}
+// Small rays emanating from the light
+for (let i = 0; i < 6; i++) {
+  const a = (i / 6) * Math.PI * 2;
+  const r1 = 0.2, r2 = 0.35;
+  lightPts.push(Math.cos(a)*r1, Math.sin(a)*r1, 0);
+  lightPts.push(Math.cos(a)*r2, Math.sin(a)*r2, 0);
+}
+const lightVBO = gl.createBuffer();
+gl.bindBuffer(gl.ARRAY_BUFFER, lightVBO);
+gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(lightPts), gl.STATIC_DRAW);
+const lightVertCount = lightPts.length / 3;
+
+/* ── Matrix Math Helpers ──────────────────────────────────── */
+
+function mat4Identity() {
+  const m = new Float32Array(16);
+  m[0] = m[5] = m[10] = m[15] = 1;
+  return m;
+}
+
+function mat4Perspective(fovRad, aspect, near, far) {
+  const f = 1 / Math.tan(fovRad / 2);
+  const nf = 1 / (near - far);
+  const m = mat4Identity();
+  m[0] = f / aspect;
+  m[5] = f;
+  m[10] = (far + near) * nf;
+  m[11] = -1;
+  m[14] = 2 * far * near * nf;
+  m[15] = 0;
+  return m;
+}
+
+function mat4LookAt(eye, center, up) {
+  const m = mat4Identity();
+  let zx = eye[0]-center[0], zy = eye[1]-center[1], zz = eye[2]-center[2];
+  let len = Math.sqrt(zx*zx + zy*zy + zz*zz);
+  zx /= len; zy /= len; zz /= len;
+  let xx = up[1]*zz - up[2]*zy;
+  let xy = up[2]*zx - up[0]*zz;
+  let xz = up[0]*zy - up[1]*zx;
+  len = Math.sqrt(xx*xx + xy*xy + xz*xz);
+  xx /= len; xy /= len; xz /= len;
+  const yx = zy*xz - zz*xy;
+  const yy = zz*xx - zx*xz;
+  const yz = zx*xy - zy*xx;
+  m[0]=xx; m[1]=yx; m[2]=zx;
+  m[4]=xy; m[5]=yy; m[6]=zy;
+  m[8]=xz; m[9]=yz; m[10]=zz;
+  m[12] = -(xx*eye[0] + xy*eye[1] + xz*eye[2]);
+  m[13] = -(yx*eye[0] + yy*eye[1] + yz*eye[2]);
+  m[14] = -(zx*eye[0] + zy*eye[1] + zz*eye[2]);
+  return m;
+}
+
+function mat4Multiply(a, b) {
+  const o = new Float32Array(16);
+  for (let i = 0; i < 4; i++) {
+    for (let j = 0; j < 4; j++) {
+      o[j*4+i] = a[i]*b[j*4] + a[4+i]*b[j*4+1] + a[8+i]*b[j*4+2] + a[12+i]*b[j*4+3];
+    }
+  }
+  return o;
+}
+
+function mat4Translate(x, y, z) {
+  const m = mat4Identity();
+  m[12] = x; m[13] = y; m[14] = z;
+  return m;
+}
+
+/* ── Canvas Resize Handler ────────────────────────────────── */
+
+function resizeCanvas() {
+  const dpr = window.devicePixelRatio || 1;
+  const w = canvas.clientWidth;
+  const h = canvas.clientHeight;
+  if (canvas.width !== w * dpr || canvas.height !== h * dpr) {
+    canvas.width = w * dpr;
+    canvas.height = h * dpr;
+  }
+}
+
+window.addEventListener('resize', resizeCanvas);
+
+/* ── Helper: Draw lines with flat shader ──────────────────── */
+
+function drawLines(vbo, count, mvp, r, g, b, a) {
+  gl.useProgram(flatProg);
+  gl.uniformMatrix4fv(fp.uMVP, false, mvp);
+  gl.uniform4f(fp.uColor, r, g, b, a);
+  gl.bindBuffer(gl.ARRAY_BUFFER, vbo);
+  gl.enableVertexAttribArray(fp.aPos);
+  gl.vertexAttribPointer(fp.aPos, 3, gl.FLOAT, false, 0, 0);
+  gl.drawArrays(gl.LINES, 0, count);
+}
+
+/* ── Main Render Loop ─────────────────────────────────────── */
+
+let orbitAngle = 0.6;
+
+function render() {
+  resizeCanvas();
+  const W = canvas.width, H = canvas.height;
+  gl.viewport(0, 0, W, H);
+
+  // Clear with viewport background color #393939
+  gl.clearColor(57/255, 57/255, 57/255, 1);
+  gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+  gl.enable(gl.DEPTH_TEST);
+
+  // Advance timeline if playing
+  if (state.playing) {
+    state.frame++;
+    if (state.frame > 250) state.frame = 1;
+    syncFrame();
+  }
+
+  // Camera orbiting slowly
+  orbitAngle += 0.004;
+  const dist = 5.0;
+  const camX = Math.sin(orbitAngle) * dist * 0.8;
+  const camZ = Math.cos(orbitAngle) * dist * 0.8;
+  const camY = 3.0;
+
+  const proj = mat4Perspective(Math.PI / 4, W / H, 0.1, 100);
+  const view = mat4LookAt([camX, camY, camZ], [0, 0.3, 0], [0, 1, 0]);
+  const vp = mat4Multiply(proj, view);
+
+  // ── Draw Grid (with alpha blending) ──
+  gl.enable(gl.BLEND);
+  gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+  drawLines(gridVBO, gridVertCount, vp, 84/255, 84/255, 84/255, 0.5);
+  gl.disable(gl.BLEND);
+
+  // ── Draw Axis Lines ──
+  gl.useProgram(flatProg);
+  gl.uniformMatrix4fv(fp.uMVP, false, vp);
+  gl.bindBuffer(gl.ARRAY_BUFFER, axisVBO);
+  gl.enableVertexAttribArray(fp.aPos);
+  gl.vertexAttribPointer(fp.aPos, 3, gl.FLOAT, false, 0, 0);
+  // X axis - red
+  gl.uniform4f(fp.uColor, 0.8, 0.2, 0.2, 1);
+  gl.drawArrays(gl.LINES, 0, 2);
+  // Y axis - green
+  gl.uniform4f(fp.uColor, 0.2, 0.8, 0.2, 1);
+  gl.drawArrays(gl.LINES, 2, 2);
+
+  // ── Draw Cube (solid shaded) ──
+  const cubeModel = mat4Translate(state.locX, state.locY, state.locZ);
+  const cubeMVP = mat4Multiply(vp, cubeModel);
+
+  gl.useProgram(shadedProg);
+  gl.uniformMatrix4fv(sp.uMVP, false, cubeMVP);
+  gl.uniformMatrix4fv(sp.uModel, false, cubeModel);
+  gl.uniform3f(sp.uColor, 0.62, 0.60, 0.59);  // #9E9A96 warm gray
+  gl.uniform1f(sp.uFlat, 0);
+
+  gl.bindBuffer(gl.ARRAY_BUFFER, cubeVBO);
+  gl.enableVertexAttribArray(sp.aPos);
+  gl.vertexAttribPointer(sp.aPos, 3, gl.FLOAT, false, 24, 0);
+  gl.enableVertexAttribArray(sp.aNorm);
+  gl.vertexAttribPointer(sp.aNorm, 3, gl.FLOAT, false, 24, 12);
+  gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, cubeIBO);
+  gl.drawElements(gl.TRIANGLES, 36, gl.UNSIGNED_SHORT, 0);
+  gl.disableVertexAttribArray(sp.aNorm);
+
+  // ── Draw Cube Wireframe (orange selection overlay) ──
+  gl.useProgram(flatProg);
+  gl.uniformMatrix4fv(fp.uMVP, false, cubeMVP);
+  gl.uniform4f(fp.uColor, 0.93, 0.60, 0.20, 1);  // #ED9A32 active object
+  gl.bindBuffer(gl.ARRAY_BUFFER, wireVBO);
+  gl.enableVertexAttribArray(fp.aPos);
+  gl.vertexAttribPointer(fp.aPos, 3, gl.FLOAT, false, 0, 0);
+  gl.depthFunc(gl.LEQUAL);
+  gl.drawArrays(gl.LINES, 0, 24);
+  gl.depthFunc(gl.LESS);
+
+  // ── Draw 3D Cursor (small crosshair at origin) ──
+  gl.uniformMatrix4fv(fp.uMVP, false, vp);
+  gl.bindBuffer(gl.ARRAY_BUFFER, cursorVBO);
+  gl.vertexAttribPointer(fp.aPos, 3, gl.FLOAT, false, 0, 0);
+  gl.uniform4f(fp.uColor, 1.0, 0.2, 0.2, 1);
+  gl.drawArrays(gl.LINES, 0, 2);  // X
+  gl.uniform4f(fp.uColor, 0.2, 1.0, 0.2, 1);
+  gl.drawArrays(gl.LINES, 2, 2);  // Y
+  gl.uniform4f(fp.uColor, 0.3, 0.4, 1.0, 1);
+  gl.drawArrays(gl.LINES, 4, 2);  // Z
+
+  // ── Draw Camera Wireframe ──
+  const camModelMat = mat4Translate(3.5, 2.5, 3.5);
+  drawLines(camVBO, camVertCount, mat4Multiply(vp, camModelMat), 0.6, 0.6, 0.6, 1);
+
+  // ── Draw Light Wireframe ──
+  const lightModelMat = mat4Translate(-2, 3, 1.5);
+  drawLines(lightVBO, lightVertCount, mat4Multiply(vp, lightModelMat), 0.96, 0.84, 0.43, 1);
+
+  requestAnimationFrame(render);
+}
+
+/* ── Orientation Gizmo (2D canvas overlay, top-right) ───── */
+
+const gizC = document.getElementById('gizmo-canvas');
+const gctx = gizC.getContext('2d');
+
+function drawGizmo() {
+  const s = 120, cx = s/2, cy = s/2, len = 28;
+  gctx.clearRect(0, 0, s, s);
+
+  // Rotate axes with camera orbit
+  const ca = -orbitAngle;
+  const sa = Math.sin(ca);
+  const co = Math.cos(ca);
+
+  // X axis (red)
+  gctx.beginPath();
+  gctx.moveTo(cx, cy);
+  gctx.lineTo(cx + co * len, cy + sa * len * 0.4);
+  gctx.strokeStyle = '#CC3333';
+  gctx.lineWidth = 2;
+  gctx.stroke();
+  gctx.fillStyle = '#CC3333';
+  gctx.font = 'bold 11px Inter, sans-serif';
+  gctx.fillText('X', cx + co * (len + 6) - 3, cy + sa * (len + 6) * 0.4 + 4);
+
+  // Y axis (green) - always vertical
+  gctx.beginPath();
+  gctx.moveTo(cx, cy);
+  gctx.lineTo(cx, cy - len);
+  gctx.strokeStyle = '#33CC33';
+  gctx.lineWidth = 2;
+  gctx.stroke();
+  gctx.fillStyle = '#33CC33';
+  gctx.fillText('Y', cx - 3, cy - len - 4);
+
+  // Z axis (blue)
+  gctx.beginPath();
+  gctx.moveTo(cx, cy);
+  gctx.lineTo(cx - sa * len, cy + co * len * 0.4);
+  gctx.strokeStyle = '#3366CC';
+  gctx.lineWidth = 2;
+  gctx.stroke();
+  gctx.fillStyle = '#3366CC';
+  gctx.fillText('Z', cx - sa * (len + 6) - 3, cy + co * (len + 6) * 0.4 + 4);
+
+  // Center dot
+  gctx.beginPath();
+  gctx.arc(cx, cy, 3, 0, Math.PI * 2);
+  gctx.fillStyle = '#888';
+  gctx.fill();
+
+  requestAnimationFrame(drawGizmo);
+}
+
+/* ── Start Rendering ──────────────────────────────────────── */
+if (gl) {
+  requestAnimationFrame(render);
+}
+drawGizmo();
+
+</script>
+</body>
+</html>
