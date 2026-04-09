@@ -2,7 +2,7 @@
 
 mod relations;
 
-pub use relations::RelationBuilder;
+pub use relations::{ArmatureNodes, ObjectNodes, RelationBuilder};
 
 use crate::node::{DepNode, DepNodeType, IdType};
 use crate::tag::DirtyTags;
@@ -10,7 +10,7 @@ use crate::{DepsgraphResult, NodeId};
 use indexmap::IndexMap;
 
 /// The dependency graph: a directed acyclic graph of evaluation nodes.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Depsgraph {
     /// All nodes in the graph, indexed by NodeId.
     pub nodes: Vec<DepNode>,

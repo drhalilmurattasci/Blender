@@ -235,3 +235,78 @@ fn quat_rotate(q: [f32; 4], v: [f32; 3]) -> [f32; 3] {
         v[2] + qw * tz + (qx * ty - qy * tx),
     ]
 }
+
+/// Apply dual quaternion skinning to vertex normals.
+///
+/// DQS normals are transformed by only the rotation part of the blended
+/// dual quaternion (no translation), then re-normalized.
+pub fn dual_quaternion_skinning_normals(
+    normals: &[[f32; 3]],
+    influences: &[VertexInfluences],
+    deform_matrices: &[[f32; 16]],
+    output: &mut [[f32; 3]],
+) {
+    debug_assert_eq!(normals.len(), influences.len());
+    debug_assert_eq!(normals.len(), output.len());
+
+    for (i, (normal, inf)) in normals.iter().zip(influences.iter()).enumerate() {
+        if inf.weights.is_empty() {
+            output[i] = *normal;
+            continue;
+        }
+
+        let total_weight: f32 = inf
+            .weights
+            .iter()
+            .filter(|vw| (vw.bone_index as usize) < deform_matrices.len())
+            .map(|vw| vw.weight)
+            .sum();
+
+        if total_weight < f32::EPSILON {
+            output[i] = *normal;
+            continue;
+        }
+
+        let weight_norm = 1.0 / total_weight;
+
+        // Blend dual quaternions (same as position skinning).
+        let mut blended = DualQuat::identity().scale(0.0);
+        let mut first_dq = None;
+
+        for vw in &inf.weights {
+            let bone_idx = vw.bone_index as usize;
+            if bone_idx >= deform_matrices.len() {
+                continue;
+            }
+
+            let dq = DualQuat::from_matrix(&deform_matrices[bone_idx]);
+
+            let dq = if let Some(ref first) = first_dq {
+                if quat_dot(dq.real, *first) < 0.0 {
+                    dq.scale(-1.0)
+                } else {
+                    dq
+                }
+            } else {
+                first_dq = Some(dq.real);
+                dq
+            };
+
+            blended = blended.add(&dq.scale(vw.weight * weight_norm));
+        }
+
+        blended.normalize();
+
+        // For normals, only apply the rotation (no translation).
+        let rotated = quat_rotate(blended.real, *normal);
+
+        // Re-normalize.
+        let len = (rotated[0] * rotated[0] + rotated[1] * rotated[1] + rotated[2] * rotated[2])
+            .sqrt();
+        if len > f32::EPSILON {
+            output[i] = [rotated[0] / len, rotated[1] / len, rotated[2] / len];
+        } else {
+            output[i] = *normal;
+        }
+    }
+}

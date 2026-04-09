@@ -77,6 +77,17 @@ impl Default for Mat3 {
     }
 }
 
+impl std::fmt::Display for Mat3 {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let a = self.to_cols_array();
+        write!(
+            f,
+            "Mat3([{}, {}, {} | {}, {}, {} | {}, {}, {}])",
+            a[0], a[1], a[2], a[3], a[4], a[5], a[6], a[7], a[8]
+        )
+    }
+}
+
 impl From<glam::Mat3A> for Mat3 {
     #[inline]
     fn from(m: glam::Mat3A) -> Self {
@@ -165,5 +176,38 @@ mod tests {
         let json = serde_json::to_string(&m).unwrap();
         let m2: Mat3 = serde_json::from_str(&json).unwrap();
         assert!(m.approx_eq(&m2, 1e-6));
+    }
+
+    #[test]
+    fn test_determinant() {
+        let m = Mat3::IDENTITY;
+        assert!((m.determinant() - 1.0).abs() < 1e-6);
+    }
+
+    #[test]
+    fn test_inverse_roundtrip() {
+        let m = Mat3::from_rotation_z(1.0);
+        let inv = m.inverse();
+        let product = m * inv;
+        assert!(product.approx_eq(&Mat3::IDENTITY, 1e-5));
+    }
+
+    #[test]
+    fn test_transpose() {
+        let m = Mat3::from_rotation_z(0.5);
+        let t = m.transpose().transpose();
+        assert!(m.approx_eq(&t, 1e-6));
+    }
+
+    #[test]
+    fn test_default_is_identity() {
+        assert!(Mat3::default().approx_eq(&Mat3::IDENTITY, 1e-6));
+    }
+
+    #[test]
+    fn test_display() {
+        let m = Mat3::IDENTITY;
+        let s = format!("{m}");
+        assert!(s.starts_with("Mat3("));
     }
 }

@@ -68,7 +68,7 @@ impl fmt::Display for DnaType {
 }
 
 /// A single field in a [`DnaSchema`].
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct DnaField {
     /// Field name (must be unique within the schema).
     pub name: String,
@@ -132,6 +132,31 @@ pub enum DnaValue {
     },
     /// Represents an explicitly null / missing value.
     Null,
+}
+
+impl fmt::Display for DnaValue {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Bool(v) => write!(f, "{v}"),
+            Self::I32(v) => write!(f, "{v}"),
+            Self::I64(v) => write!(f, "{v}"),
+            Self::F32(v) => write!(f, "{v}"),
+            Self::F64(v) => write!(f, "{v}"),
+            Self::String(v) => write!(f, "\"{v}\""),
+            Self::Vec2(v) => write!(f, "Vec2({}, {})", v[0], v[1]),
+            Self::Vec3(v) => write!(f, "Vec3({}, {}, {})", v[0], v[1], v[2]),
+            Self::Vec4(v) => write!(f, "Vec4({}, {}, {}, {})", v[0], v[1], v[2], v[3]),
+            Self::Mat4(_) => write!(f, "Mat4(...)"),
+            Self::Quat(v) => write!(f, "Quat({}, {}, {}, {})", v[0], v[1], v[2], v[3]),
+            Self::Color4f(v) => write!(f, "Color4f({}, {}, {}, {})", v[0], v[1], v[2], v[3]),
+            Self::Array(arr) => write!(f, "Array(len={})", arr.len()),
+            Self::Struct(map) => write!(f, "Struct(fields={})", map.len()),
+            Self::Option(None) => write!(f, "None"),
+            Self::Option(Some(inner)) => write!(f, "Some({inner})"),
+            Self::Enum { variant, .. } => write!(f, "Enum::{variant}"),
+            Self::Null => write!(f, "Null"),
+        }
+    }
 }
 
 impl DnaValue {
@@ -210,7 +235,7 @@ impl DnaValue {
 ///
 /// Schemas are typically registered once at startup via the global
 /// [`DnaRegistry`](crate::registry::DnaRegistry).
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct DnaSchema {
     /// Fully-qualified struct name (e.g., `"forge3d::scene::ObjectData"`).
     pub name: String,
@@ -218,6 +243,12 @@ pub struct DnaSchema {
     pub version: u32,
     /// Ordered list of fields.
     pub fields: Vec<DnaField>,
+}
+
+impl fmt::Display for DnaSchema {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}(v{}, {} fields)", self.name, self.version, self.fields.len())
+    }
 }
 
 impl DnaSchema {
@@ -281,6 +312,49 @@ mod tests {
             assert_eq!(map.get("position"), Some(&DnaValue::Vec3([0.0; 3])));
         } else {
             panic!("expected Struct");
+        }
+    }
+
+    #[test]
+    fn dna_value_display() {
+        assert_eq!(DnaValue::Bool(true).to_string(), "true");
+        assert_eq!(DnaValue::I32(42).to_string(), "42");
+        assert_eq!(DnaValue::Null.to_string(), "Null");
+        assert_eq!(DnaValue::String("hello".into()).to_string(), "\"hello\"");
+        assert!(DnaValue::Vec3([1.0, 2.0, 3.0]).to_string().starts_with("Vec3("));
+    }
+
+    #[test]
+    fn dna_schema_display() {
+        let s = DnaSchema::new("Test", 2)
+            .field(DnaField::new("x", DnaType::F32));
+        assert_eq!(s.to_string(), "Test(v2, 1 fields)");
+    }
+
+    #[test]
+    fn dna_value_as_accessors() {
+        assert_eq!(DnaValue::Bool(true).as_bool(), Some(true));
+        assert_eq!(DnaValue::I32(10).as_bool(), None);
+        assert_eq!(DnaValue::I32(10).as_f64(), Some(10.0));
+        assert_eq!(DnaValue::F32(3.14).as_f64(), Some(3.14));
+        assert_eq!(DnaValue::String("hi".into()).as_str(), Some("hi"));
+        assert_eq!(DnaValue::I32(0).as_str(), None);
+    }
+
+    #[test]
+    fn dna_value_default_for_enum() {
+        let ty = DnaType::Enum {
+            name: "TestEnum".into(),
+            variants: vec![
+                ("A".into(), None),
+                ("B".into(), Some(DnaType::I32)),
+            ],
+        };
+        let val = DnaValue::default_for_type(&ty);
+        if let DnaValue::Enum { variant, .. } = &val {
+            assert_eq!(variant, "A");
+        } else {
+            panic!("expected Enum");
         }
     }
 

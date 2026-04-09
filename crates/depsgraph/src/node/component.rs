@@ -30,7 +30,7 @@ pub enum ComponentType {
 }
 
 /// A component node in the dependency graph.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct ComponentNode {
     /// Component type.
     pub component_type: ComponentType,

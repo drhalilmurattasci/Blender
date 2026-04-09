@@ -25,6 +25,10 @@ pub enum OpError {
     /// A geometric computation failed (e.g. degenerate polygon).
     #[error("geometry error: {0}")]
     GeometryError(String),
+
+    /// An unexpected internal error (e.g. cycle corruption detected mid-operation).
+    #[error("internal error: {0}")]
+    InternalError(String),
 }
 
 /// Convenience alias for operation results.

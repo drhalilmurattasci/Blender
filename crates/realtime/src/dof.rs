@@ -55,16 +55,16 @@ impl DepthOfFieldPass {
         let near_field = RenderTarget::new(
             device,
             "dof_near",
-            width / 2,
-            height / 2,
+            (width / 2).max(1),
+            (height / 2).max(1),
             hdr_color_format(),
         );
 
         let far_field = RenderTarget::new(
             device,
             "dof_far",
-            width / 2,
-            height / 2,
+            (width / 2).max(1),
+            (height / 2).max(1),
             hdr_color_format(),
         );
 
@@ -92,8 +92,8 @@ impl DepthOfFieldPass {
         self.width = width;
         self.height = height;
         self.coc_target.resize(device, width, height);
-        self.near_field.resize(device, width / 2, height / 2);
-        self.far_field.resize(device, width / 2, height / 2);
+        self.near_field.resize(device, (width / 2).max(1), (height / 2).max(1));
+        self.far_field.resize(device, (width / 2).max(1), (height / 2).max(1));
         self.output.resize(device, width, height);
     }
 

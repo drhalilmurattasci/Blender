@@ -8,7 +8,7 @@ use crate::interpolation::InterpolationMode;
 use serde::{Deserialize, Serialize};
 
 /// A single keyframe on an F-Curve.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Keyframe {
     /// Frame position (time).
     pub time: f32,

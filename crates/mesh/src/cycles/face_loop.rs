@@ -43,8 +43,8 @@ impl<'a> FaceLoopIter<'a> {
             first_h,
             current_h: first_h,
             done: first_h.is_dangling(),
-            // Use face.len as the expected count, but cap at a safety maximum.
-            remaining: if max_len > 0 { max_len } else { MAX_FACE_LOOP_ITER },
+            // Use face.len as the expected count, capped at the safety maximum.
+            remaining: if max_len > 0 { max_len.min(MAX_FACE_LOOP_ITER) } else { MAX_FACE_LOOP_ITER },
         }
     }
 }
@@ -52,6 +52,7 @@ impl<'a> FaceLoopIter<'a> {
 impl<'a> Iterator for FaceLoopIter<'a> {
     type Item = Handle<LoopElem>;
 
+    #[inline]
     fn next(&mut self) -> Option<Self::Item> {
         if self.done || self.remaining == 0 {
             return None;

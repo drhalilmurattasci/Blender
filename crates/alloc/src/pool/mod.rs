@@ -109,12 +109,13 @@ impl<T> Pool<T> {
     ///
     /// # Panics
     ///
-    /// Panics in debug mode if `index` is out of range or already free.
+    /// Panics if `index` is out of range or the slot is already free
+    /// (double-free).
     #[inline]
     pub fn free(&mut self, index: u32) {
         let i = index as usize;
-        debug_assert!(i < self.slots.len(), "pool index out of range");
-        debug_assert!(self.slots[i].is_some(), "double free on pool slot {index}");
+        assert!(i < self.slots.len(), "pool index {index} out of range (capacity {})", self.slots.len());
+        assert!(self.slots[i].is_some(), "double free on pool slot {index}");
 
         self.slots[i] = None;
         self.free_stack.push(index);

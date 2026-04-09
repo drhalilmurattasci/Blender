@@ -125,6 +125,7 @@ impl NlaStrip {
     /// Equivalently (Blender's actual formula):
     /// `action_start + fmod(strip_time, action_length * scale) / scale`
     /// where `repeat` is accounted for because the strip_duration = action_length * scale * repeat.
+    #[inline]
     pub fn map_frame(&self, frame: f32) -> f32 {
         let strip_duration = self.duration();
         if strip_duration <= f32::EPSILON || self.scale.abs() < f32::EPSILON {
@@ -178,6 +179,7 @@ impl NlaStrip {
     /// When the frame is outside the strip range (extrapolation), the influence
     /// is returned without blend-in/out ramps, matching Blender's behavior
     /// where held values use full influence.
+    #[inline]
     pub fn blend_factor(&self, frame: f32) -> f32 {
         // Outside strip range: for Hold/HoldForward extrapolation, use full influence.
         if frame < self.start || frame > self.end {
@@ -205,5 +207,125 @@ impl NlaStrip {
         }
 
         factor.clamp(0.0, 1.0)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn basic_strip() -> NlaStrip {
+        let mut s = NlaStrip::new("test", "action", 10.0, 30.0);
+        s.action_start = 0.0;
+        s.action_end = 20.0;
+        s
+    }
+
+    #[test]
+    fn map_frame_at_start() {
+        let s = basic_strip();
+        let f = s.map_frame(10.0);
+        assert!((f - 0.0).abs() < 1e-4, "expected action_start, got {f}");
+    }
+
+    #[test]
+    fn map_frame_at_end() {
+        let s = basic_strip();
+        let f = s.map_frame(30.0);
+        // At the exact end of a single cycle, modulo wraps to 0 (start of action).
+        // This matches Blender's behavior where fmod(duration, duration) == 0.
+        assert!((f - 0.0).abs() < 1e-4, "expected action_start at cycle boundary, got {f}");
+    }
+
+    #[test]
+    fn map_frame_near_end() {
+        let s = basic_strip();
+        // Just before the end should map near the action end.
+        let f = s.map_frame(29.99);
+        assert!((f - 19.99).abs() < 0.1, "expected near action_end, got {f}");
+    }
+
+    #[test]
+    fn map_frame_midpoint() {
+        let s = basic_strip();
+        let f = s.map_frame(20.0);
+        assert!((f - 10.0).abs() < 1e-4, "expected 10.0, got {f}");
+    }
+
+    #[test]
+    fn map_frame_reversed() {
+        let mut s = basic_strip();
+        s.reversed = true;
+        let f = s.map_frame(10.0);
+        assert!((f - 20.0).abs() < 1e-4, "reversed start should map to action_end, got {f}");
+    }
+
+    #[test]
+    fn map_frame_zero_duration() {
+        let s = NlaStrip::new("test", "action", 5.0, 5.0);
+        let f = s.map_frame(5.0);
+        // Should not panic.
+        assert!(f.is_finite(), "zero duration map_frame produced {f}");
+    }
+
+    #[test]
+    fn map_frame_zero_scale() {
+        let mut s = basic_strip();
+        s.scale = 0.0;
+        let f = s.map_frame(20.0);
+        assert!(f.is_finite(), "zero scale map_frame produced {f}");
+    }
+
+    #[test]
+    fn blend_factor_within_range() {
+        let s = basic_strip();
+        let f = s.blend_factor(20.0);
+        assert!((f - 1.0).abs() < 1e-6);
+    }
+
+    #[test]
+    fn blend_factor_with_blend_in() {
+        let mut s = basic_strip();
+        s.blend_in = 4.0;
+        // At start, factor should be 0.
+        let f0 = s.blend_factor(10.0);
+        assert!(f0 < 1e-6, "blend_in at start: {f0}");
+        // At midpoint of blend-in, should be 0.5.
+        let f_mid = s.blend_factor(12.0);
+        assert!((f_mid - 0.5).abs() < 1e-4, "blend_in midpoint: {f_mid}");
+    }
+
+    #[test]
+    fn blend_factor_with_blend_out() {
+        let mut s = basic_strip();
+        s.blend_out = 4.0;
+        // At end, factor should be 0.
+        let f0 = s.blend_factor(30.0);
+        assert!(f0 < 1e-6, "blend_out at end: {f0}");
+    }
+
+    #[test]
+    fn blend_factor_outside_range_extrapolation() {
+        let s = basic_strip();
+        // Before strip, Hold extrapolation returns full influence.
+        let f = s.blend_factor(0.0);
+        assert!((f - 1.0).abs() < 1e-6);
+    }
+
+    #[test]
+    fn is_active_at_with_nothing_extrapolation() {
+        let mut s = basic_strip();
+        s.extrapolation = NlaExtrapolation::Nothing;
+        assert!(!s.is_active_at(5.0));
+        assert!(!s.is_active_at(35.0));
+        assert!(s.is_active_at(20.0));
+    }
+
+    #[test]
+    fn is_active_at_with_hold_forward() {
+        let mut s = basic_strip();
+        s.extrapolation = NlaExtrapolation::HoldForward;
+        assert!(!s.is_active_at(5.0)); // Before: not active.
+        assert!(s.is_active_at(35.0)); // After: active.
     }
 }

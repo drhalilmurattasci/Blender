@@ -159,6 +159,7 @@ impl<'a> DiskIter<'a> {
 impl<'a> Iterator for DiskIter<'a> {
     type Item = Handle<Edge>;
 
+    #[inline]
     fn next(&mut self) -> Option<Self::Item> {
         if self.done || self.remaining == 0 {
             return None;

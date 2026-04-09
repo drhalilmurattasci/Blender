@@ -56,6 +56,33 @@ pub enum NodeType {
     TriangulateMesh,
     DualMesh,
 
+    // Curve
+    CurveToMesh,
+    CurveToPoints,
+    FillCurve,
+    FilletCurve,
+    ResampleCurve,
+    ReverseCurve,
+    SubdivideCurve,
+    TrimCurve,
+    SetCurveRadius,
+    SetCurveTilt,
+    SetHandleType,
+    SetSplineType,
+    SetSplineCyclic,
+    SetSplineResolution,
+    CurveLength,
+    CurveHandlePositions,
+    CurveTangent,
+
+    // Curve Primitives
+    CurveBezierSegment,
+    CurveCircle,
+    CurveLine,
+    CurveQuadrilateral,
+    CurveStar,
+    CurveSpiral,
+
     // Mesh Primitives
     MeshCircle,
     MeshCone,
@@ -85,6 +112,52 @@ pub enum NodeType {
     Value,
     RandomValue,
     ObjectInfo,
+
+    // Instances
+    InstanceOnPoints,
+    RotateInstances,
+    ScaleInstances,
+    TranslateInstances,
+
+    // Attribute
+    StoreNamedAttribute,
+    CaptureAttribute,
+    RemoveNamedAttribute,
+
+    // Point
+    DistributePointsOnFaces,
+    PointsToVertices,
+    SetPointRadius,
+
+    // Volume
+    MeshToVolume,
+    VolumeToMesh,
+
+    // Material
+    SetMaterialIndex,
+    ReplaceMaterial,
+
+    // Texture
+    NoiseTexture,
+    VoronoiTexture,
+    MusgraveTexture,
+    GradientTexture,
+    WaveTexture,
+    WhiteNoiseTexture,
+
+    // Color
+    ColorRamp,
+    CombineColor,
+    SeparateColor,
+
+    // Vector
+    CombineXYZ,
+    SeparateXYZ,
+
+    // String
+    StringJoin,
+    StringToNumber,
+    ValueToString,
 
     // Custom / unknown
     Custom(u32),

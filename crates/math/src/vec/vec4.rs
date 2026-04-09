@@ -1,5 +1,6 @@
 use bytemuck::{Pod, Zeroable};
 use serde::{Deserialize, Serialize};
+use std::fmt;
 use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign};
 
 use crate::traits::{ApproxEq, Lerp};
@@ -86,6 +87,12 @@ impl Default for Vec4 {
     #[inline]
     fn default() -> Self {
         Self::ZERO
+    }
+}
+
+impl fmt::Display for Vec4 {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "({}, {}, {}, {})", self.x, self.y, self.z, self.w)
     }
 }
 
@@ -255,5 +262,26 @@ mod tests {
         let v = Vec4::new(1.0, 2.0, 3.0, 4.0);
         let bytes = bytemuck::bytes_of(&v);
         assert_eq!(bytes.len(), 16);
+    }
+
+    #[test]
+    fn test_lerp() {
+        let a = Vec4::ZERO;
+        let b = Vec4::new(10.0, 20.0, 30.0, 40.0);
+        let mid = a.lerp(b, 0.5);
+        assert!(mid.approx_eq(&Vec4::new(5.0, 10.0, 15.0, 20.0), 1e-6));
+    }
+
+    #[test]
+    fn test_display() {
+        let v = Vec4::new(1.0, 2.0, 3.0, 4.0);
+        let s = format!("{v}");
+        assert!(s.contains("1"));
+        assert!(s.contains("4"));
+    }
+
+    #[test]
+    fn test_default() {
+        assert_eq!(Vec4::default(), Vec4::ZERO);
     }
 }

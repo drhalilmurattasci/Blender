@@ -172,6 +172,16 @@ impl BvhTree {
         }
 
         let parent_sa = bounds.surface_area();
+        // If parent surface area is zero or degenerate (all primitives overlap at a
+        // point/line/plane), SAH ratios are meaningless -- fall back to a leaf or
+        // midpoint split.
+        if parent_sa <= 0.0 {
+            return BvhNode::Leaf {
+                bounds,
+                first_prim: start as u32,
+                prim_count: count as u32,
+            };
+        }
         let leaf_cost = Self::INTERSECT_COST * count as f32;
 
         // Evaluate SAH over all three axes using binning.

@@ -37,7 +37,7 @@ impl SsrPass {
     /// Create a new SSR pass.
     pub fn new(device: &wgpu::Device, width: u32, height: u32, config: SsrConfig) -> Self {
         let (w, h) = if config.half_resolution {
-            (width / 2, height / 2)
+            ((width / 2).max(1), (height / 2).max(1))
         } else {
             (width, height)
         };
@@ -61,7 +61,7 @@ impl SsrPass {
     /// Resize the SSR target.
     pub fn resize(&mut self, device: &wgpu::Device, width: u32, height: u32) {
         let (w, h) = if self.config.half_resolution {
-            (width / 2, height / 2)
+            ((width / 2).max(1), (height / 2).max(1))
         } else {
             (width, height)
         };

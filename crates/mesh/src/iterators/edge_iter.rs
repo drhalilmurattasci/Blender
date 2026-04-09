@@ -28,6 +28,7 @@ impl<'a> EdgeFaces<'a> {
 impl<'a> Iterator for EdgeFaces<'a> {
     type Item = Handle<Face>;
 
+    #[inline]
     fn next(&mut self) -> Option<Self::Item> {
         let loop_h = self.radial.next()?;
         let l = self.loops.get(loop_h)?;

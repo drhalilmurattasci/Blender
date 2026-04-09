@@ -72,6 +72,16 @@ impl BlendHeader {
 
         let version = [data[9], data[10], data[11]];
 
+        // Validate version digits are ASCII '0'..'9'.
+        for (i, &byte) in version.iter().enumerate() {
+            if !byte.is_ascii_digit() {
+                return Err(IoError::ParseError {
+                    offset: 9 + i as u64,
+                    detail: format!("invalid version digit: 0x{byte:02X}"),
+                });
+            }
+        }
+
         Ok(Self {
             pointer_size,
             endianness,
@@ -172,7 +182,12 @@ impl BlendFile {
                 data_offset,
             });
 
-            cursor += block_header_size + size as usize;
+            let next = cursor + block_header_size + size as usize;
+            if next > data.len() {
+                // Truncated block -- stop parsing rather than panicking.
+                break;
+            }
+            cursor = next;
         }
 
         Ok(Self { header, blocks })
@@ -180,7 +195,10 @@ impl BlendFile {
 }
 
 fn read_u32(data: &[u8], endianness: Endianness) -> u32 {
-    let bytes: [u8; 4] = data[..4].try_into().unwrap();
+    let bytes: [u8; 4] = data
+        .get(..4)
+        .and_then(|s| s.try_into().ok())
+        .unwrap_or([0; 4]);
     match endianness {
         Endianness::Little => u32::from_le_bytes(bytes),
         Endianness::Big => u32::from_be_bytes(bytes),
@@ -188,7 +206,10 @@ fn read_u32(data: &[u8], endianness: Endianness) -> u32 {
 }
 
 fn read_u64(data: &[u8], endianness: Endianness) -> u64 {
-    let bytes: [u8; 8] = data[..8].try_into().unwrap();
+    let bytes: [u8; 8] = data
+        .get(..8)
+        .and_then(|s| s.try_into().ok())
+        .unwrap_or([0; 8]);
     match endianness {
         Endianness::Little => u64::from_le_bytes(bytes),
         Endianness::Big => u64::from_be_bytes(bytes),

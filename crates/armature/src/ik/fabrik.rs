@@ -38,11 +38,13 @@ impl IkSolver for FabrikSolver {
             return 1;
         }
 
+        let mut iterations_done = settings.max_iterations;
         for iteration in 0..settings.max_iterations {
             // Check convergence.
             let dist = distance(joint_positions[end_idx], target);
             if dist < settings.tolerance {
-                return iteration;
+                iterations_done = iteration;
+                break;
             }
 
             // --- Forward reaching (from end to root) ---
@@ -60,12 +62,12 @@ impl IkSolver for FabrikSolver {
             }
         }
 
-        // Apply pole target constraint if set.
+        // Apply pole target constraint if set (always, whether converged or not).
         if let Some(pole) = settings.pole_target {
             apply_pole_target(joint_positions, bone_lengths, target, pole, settings.pole_angle);
         }
 
-        settings.max_iterations
+        iterations_done
     }
 }
 

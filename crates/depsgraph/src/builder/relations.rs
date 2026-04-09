@@ -123,6 +123,7 @@ impl<'a> RelationBuilder<'a> {
 }
 
 /// Node IDs for a standard object.
+#[derive(Debug, Clone)]
 pub struct ObjectNodes {
     pub id: NodeId,
     pub transform: NodeId,
@@ -135,6 +136,7 @@ pub struct ObjectNodes {
 }
 
 /// Node IDs for an armature object.
+#[derive(Debug, Clone)]
 pub struct ArmatureNodes {
     pub object: ObjectNodes,
     pub pose: NodeId,

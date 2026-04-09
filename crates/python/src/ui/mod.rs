@@ -74,6 +74,25 @@ impl PyUILayout {
     fn command_count(&self) -> usize {
         self.commands.len()
     }
+
+    /// Return all commands as a list of (kind, arg1, arg2) tuples.
+    fn get_commands(&self) -> Vec<(String, String, String)> {
+        self.commands
+            .iter()
+            .map(|cmd| match cmd {
+                LayoutCommand::Label(text) => ("label".into(), text.clone(), String::new()),
+                LayoutCommand::Property(path, prop) => {
+                    ("property".into(), path.clone(), prop.clone())
+                }
+                LayoutCommand::Button(idname, text) => {
+                    ("button".into(), idname.clone(), text.clone())
+                }
+                LayoutCommand::Separator => ("separator".into(), String::new(), String::new()),
+                LayoutCommand::Row => ("row".into(), String::new(), String::new()),
+                LayoutCommand::Column => ("column".into(), String::new(), String::new()),
+            })
+            .collect()
+    }
 }
 
 /// Properties passed to a Python operator invocation.

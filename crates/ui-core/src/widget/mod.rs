@@ -206,12 +206,14 @@ pub struct Slider {
 
 impl Slider {
     pub fn new(id: WidgetId, label: impl Into<String>, value: f32, min: f32, max: f32) -> Self {
+        // Ensure min <= max and clamp value into range.
+        let (actual_min, actual_max) = if min <= max { (min, max) } else { (max, min) };
         Self {
             id,
             label: label.into(),
-            value,
-            min,
-            max,
+            value: value.clamp(actual_min, actual_max),
+            min: actual_min,
+            max: actual_max,
         }
     }
 

@@ -36,6 +36,7 @@ impl Driver {
     ///
     /// Variable values must have been resolved externally before calling this
     /// (i.e., `cached_value` on each `DriverVariable` must be up to date).
+    #[inline]
     pub fn evaluate(&self, frame: f64) -> DriverResult<f64> {
         if self.muted {
             return Ok(0.0);

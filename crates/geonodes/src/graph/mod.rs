@@ -82,6 +82,10 @@ impl NodeGraph {
     /// Remove a node and all its links.
     pub fn remove_node(&mut self, id: NodeId) -> Option<Node> {
         self.links.retain(|l| l.from_node != id && l.to_node != id);
+        if self.group_input == Some(id) {
+            self.group_input = None;
+        }
+        self.group_outputs.retain(|&out_id| out_id != id);
         self.nodes.remove(&id)
     }
 

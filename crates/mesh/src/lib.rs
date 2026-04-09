@@ -68,6 +68,13 @@ pub struct Mesh {
     pub face_layers: LayerStack,
 }
 
+// Static assertion: Mesh must be Send + Sync because it contains only owned
+// arena data with no interior mutability, Rc, or raw pointers.
+const _: fn() = || {
+    fn must_be_send_sync<T: Send + Sync>() {}
+    must_be_send_sync::<Mesh>();
+};
+
 impl Default for Mesh {
     fn default() -> Self {
         Self::new()

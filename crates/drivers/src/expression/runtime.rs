@@ -137,11 +137,11 @@ fn eval_function(name: &str, args: &[f64]) -> Result<f64, DriverError> {
         }
         "asin" => {
             let a = args.first().ok_or_else(|| err("expected 1 argument"))?;
-            Ok(a.asin())
+            Ok(a.clamp(-1.0, 1.0).asin())
         }
         "acos" => {
             let a = args.first().ok_or_else(|| err("expected 1 argument"))?;
-            Ok(a.acos())
+            Ok(a.clamp(-1.0, 1.0).acos())
         }
         "atan" => {
             let a = args.first().ok_or_else(|| err("expected 1 argument"))?;
@@ -153,7 +153,7 @@ fn eval_function(name: &str, args: &[f64]) -> Result<f64, DriverError> {
         }
         "sqrt" => {
             let a = args.first().ok_or_else(|| err("expected 1 argument"))?;
-            Ok(a.sqrt())
+            Ok(a.max(0.0).sqrt())
         }
         "abs" => {
             let a = args.first().ok_or_else(|| err("expected 1 argument"))?;
@@ -189,11 +189,19 @@ fn eval_function(name: &str, args: &[f64]) -> Result<f64, DriverError> {
         }
         "log" => {
             let a = args.first().ok_or_else(|| err("expected 1 argument"))?;
-            Ok(a.ln())
+            if *a <= 0.0 {
+                Ok(f64::NEG_INFINITY)
+            } else {
+                Ok(a.ln())
+            }
         }
         "log10" => {
             let a = args.first().ok_or_else(|| err("expected 1 argument"))?;
-            Ok(a.log10())
+            if *a <= 0.0 {
+                Ok(f64::NEG_INFINITY)
+            } else {
+                Ok(a.log10())
+            }
         }
         "exp" => {
             let a = args.first().ok_or_else(|| err("expected 1 argument"))?;

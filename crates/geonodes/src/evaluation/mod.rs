@@ -7,6 +7,7 @@ use crate::GeoNodeResult;
 use ahash::AHashMap;
 
 /// Per-node evaluation context.
+#[derive(Debug)]
 pub struct EvalContext {
     /// Resolved input values for the current node, keyed by socket index.
     pub inputs: AHashMap<usize, SocketValue>,
@@ -54,6 +55,7 @@ impl EvalContext {
 }
 
 /// The graph evaluator.
+#[derive(Debug)]
 pub struct Evaluator {
     /// Cached topological order from the last evaluation.
     topo_cache: Vec<NodeId>,

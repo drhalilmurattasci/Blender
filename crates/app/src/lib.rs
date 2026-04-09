@@ -101,3 +101,60 @@ impl Application {
         println!("Forge3D initialized");
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn init_tracing() {
+        // Ignore errors if already initialized.
+        let _ = tracing_subscriber::fmt()
+            .with_test_writer()
+            .try_init();
+    }
+
+    #[test]
+    fn application_new_does_not_panic() {
+        init_tracing();
+        let app = Application::new();
+        assert_eq!(app.scene.name, "Scene");
+        assert_eq!(app.scene.fps, 24.0);
+        assert!(app.scene.active_camera.is_none());
+        assert!(app.plugins.is_empty());
+    }
+
+    #[test]
+    fn create_default_scene_adds_three_objects() {
+        init_tracing();
+        let mut app = Application::new();
+        app.create_default_scene();
+        // Should have Cube, Camera, Light.
+        let names: Vec<&str> = app.scene.iter_objects().map(|(_, o)| o.name.as_str()).collect();
+        assert_eq!(names.len(), 3);
+        assert!(names.contains(&"Cube"));
+        assert!(names.contains(&"Camera"));
+        assert!(names.contains(&"Light"));
+    }
+
+    #[test]
+    fn default_scene_has_active_camera() {
+        init_tracing();
+        let mut app = Application::new();
+        app.create_default_scene();
+        assert!(app.scene.active_camera.is_some());
+        let cam_handle = app.scene.active_camera.unwrap();
+        let cam = app.scene.get_object(cam_handle).unwrap();
+        assert_eq!(cam.name, "Camera");
+    }
+
+    #[test]
+    fn default_scene_camera_transform_recomputed() {
+        init_tracing();
+        let mut app = Application::new();
+        app.create_default_scene();
+        let cam_handle = app.scene.active_camera.unwrap();
+        let cam = app.scene.get_object(cam_handle).unwrap();
+        // Translation column should match location.
+        assert!((cam.transform.matrix_local[3][0] - 7.359).abs() < 0.01);
+    }
+}

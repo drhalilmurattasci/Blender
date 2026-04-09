@@ -86,14 +86,14 @@ impl Color3f {
         ]
     }
 
-    /// Convert to sRGB u8 values (0..255).
+    /// Convert to sRGB u8 values (0..255), clamping to the valid range.
     #[inline]
     pub fn to_srgb_u8(self) -> [u8; 3] {
         let srgb = self.to_srgb();
         [
-            (srgb[0] * 255.0 + 0.5) as u8,
-            (srgb[1] * 255.0 + 0.5) as u8,
-            (srgb[2] * 255.0 + 0.5) as u8,
+            (srgb[0].clamp(0.0, 1.0) * 255.0 + 0.5) as u8,
+            (srgb[1].clamp(0.0, 1.0) * 255.0 + 0.5) as u8,
+            (srgb[2].clamp(0.0, 1.0) * 255.0 + 0.5) as u8,
         ]
     }
 
@@ -114,6 +114,12 @@ impl Default for Color3f {
     #[inline]
     fn default() -> Self {
         Self::BLACK
+    }
+}
+
+impl std::fmt::Display for Color3f {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "Color3f({}, {}, {})", self.r, self.g, self.b)
     }
 }
 
@@ -177,5 +183,46 @@ mod tests {
         let c = Color3f::WHITE;
         let bytes = bytemuck::bytes_of(&c);
         assert_eq!(bytes.len(), 12);
+    }
+
+    #[test]
+    fn test_srgb_u8_roundtrip() {
+        let c = Color3f::from_srgb_u8(128, 64, 255);
+        let u8s = c.to_srgb_u8();
+        assert_eq!(u8s[0], 128);
+        assert_eq!(u8s[1], 64);
+        assert_eq!(u8s[2], 255);
+    }
+
+    #[test]
+    fn test_srgb_u8_clamping() {
+        // Out-of-range linear values should clamp to 0..255
+        let c = Color3f::new(2.0, -1.0, 0.5);
+        let u8s = c.to_srgb_u8();
+        assert_eq!(u8s[0], 255); // clamped high
+        assert_eq!(u8s[1], 0);   // clamped low
+    }
+
+    #[test]
+    fn test_to_rgba() {
+        let c = Color3f::RED;
+        let rgba = c.to_rgba(0.5);
+        assert!((rgba.r - 1.0).abs() < 1e-6);
+        assert!((rgba.a - 0.5).abs() < 1e-6);
+    }
+
+    #[test]
+    fn test_display() {
+        let c = Color3f::RED;
+        let s = format!("{c}");
+        assert!(s.starts_with("Color3f("));
+    }
+
+    #[test]
+    fn test_lerp() {
+        let a = Color3f::BLACK;
+        let b = Color3f::WHITE;
+        let mid = a.lerp(b, 0.5);
+        assert!((mid.r - 0.5).abs() < 1e-6);
     }
 }

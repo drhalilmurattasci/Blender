@@ -61,6 +61,12 @@ impl Ray {
     }
 }
 
+impl std::fmt::Display for Ray {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "Ray(origin={}, direction={})", self.origin, self.direction)
+    }
+}
+
 impl ApproxEq for Ray {
     #[inline]
     fn approx_eq(&self, other: &Self, epsilon: f32) -> bool {

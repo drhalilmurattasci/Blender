@@ -26,6 +26,7 @@ impl<'a> VertEdges<'a> {
 impl<'a> Iterator for VertEdges<'a> {
     type Item = Handle<Edge>;
 
+    #[inline]
     fn next(&mut self) -> Option<Self::Item> {
         self.inner.next()
     }
@@ -87,6 +88,7 @@ impl<'a> VertFaces<'a> {
 impl<'a> Iterator for VertFaces<'a> {
     type Item = Handle<Face>;
 
+    #[inline]
     fn next(&mut self) -> Option<Self::Item> {
         loop {
             if self.radial_done {

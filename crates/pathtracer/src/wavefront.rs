@@ -92,7 +92,13 @@ impl WavefrontPathtracer {
                     ray.active = false;
                 }
                 Some(hit_info) => {
-                    let material = &scene.materials[hit_info.material_id as usize];
+                    let material = match scene.materials.get(hit_info.material_id as usize) {
+                        Some(m) => m,
+                        None => {
+                            ray.active = false;
+                            continue;
+                        }
+                    };
 
                     if material.is_emissive() {
                         let e = material.emission * material.emission_strength;

@@ -24,7 +24,7 @@ impl Default for HandleType {
 }
 
 /// A single Bezier handle (the control point on one side of a keyframe).
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct KeyframeHandle {
     /// Handle type determines auto-computation behavior.
     pub handle_type: HandleType,

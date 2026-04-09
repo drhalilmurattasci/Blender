@@ -18,6 +18,7 @@ const ROOT_UPPER: f64 = 1.000001;
 /// Uses Blender's analytical cubic solver (`findzero` / `solve_cubic` via
 /// Cardano's formula) to find the parameter `t` such that `bezier_x(t) == time`,
 /// then evaluates `bezier_y(t)` for the value.
+#[inline]
 pub fn evaluate_bezier(k1: &Keyframe, k2: &Keyframe, time: f32) -> f32 {
     let x0 = k1.time;
     let y0 = k1.value;
@@ -57,6 +58,12 @@ fn correct_bezpart(
     let h2y = v4y - *v3y;
 
     let len = v4x - v1x;
+
+    // If the keyframes are at the same time (degenerate segment), nothing to fix.
+    if len <= f32::EPSILON {
+        return;
+    }
+
     let len1 = h1x.abs();
     let len2 = h2x.abs();
 
@@ -228,10 +235,92 @@ fn pick_root(roots: &[f64], time: f64, x0: f64, x1: f64, x2: f64, x3: f64) -> f6
 /// - `c1 = 3*(f2 - f1)`
 /// - `c2 = 3*(f1 - 2*f2 + f3)`
 /// - `c3 = f4 - f1 + 3*(f2 - f3)`
+#[inline]
 fn berekeny(f1: f64, f2: f64, f3: f64, f4: f64, t: f64) -> f64 {
     let c0 = f1;
     let c1 = 3.0 * (f2 - f1);
     let c2 = 3.0 * (f1 - 2.0 * f2 + f3);
     let c3 = f4 - f1 + 3.0 * (f2 - f3);
     c0 + t * c1 + t * t * c2 + t * t * t * c3
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::keyframe::{Keyframe, KeyframeHandle};
+
+    fn make_bezier_pair(t1: f32, v1: f32, rh: (f32, f32), t2: f32, v2: f32, lh: (f32, f32)) -> (Keyframe, Keyframe) {
+        let mut k1 = Keyframe::new(t1, v1);
+        k1.handle_right = KeyframeHandle::new(rh.0, rh.1);
+        let mut k2 = Keyframe::new(t2, v2);
+        k2.handle_left = KeyframeHandle::new(lh.0, lh.1);
+        (k1, k2)
+    }
+
+    #[test]
+    fn bezier_monotone_evaluation() {
+        // Evaluate across the range and check all values are finite and within bounds.
+        let (k1, k2) = make_bezier_pair(0.0, 0.0, (3.33, 1.67), 10.0, 5.0, (6.67, 3.33));
+        for i in 1..10 {
+            let t = i as f32;
+            let v = evaluate_bezier(&k1, &k2, t);
+            assert!(v.is_finite(), "non-finite at t={t}: {v}");
+            assert!(v >= -0.5 && v <= 5.5, "value out of expected range at t={t}: {v}");
+        }
+    }
+
+    #[test]
+    fn bezier_midpoint_linear_handles() {
+        // With handles forming a straight line, midpoint should be close to linear interp.
+        let (k1, k2) = make_bezier_pair(0.0, 0.0, (3.33, 1.67), 10.0, 5.0, (6.67, 3.33));
+        let v_mid = evaluate_bezier(&k1, &k2, 5.0);
+        assert!((v_mid - 2.5).abs() < 0.2, "midpoint value: {v_mid}");
+    }
+
+    #[test]
+    fn bezier_same_frame_keyframes() {
+        // Degenerate case: keyframes at the same time.
+        let (k1, k2) = make_bezier_pair(5.0, 1.0, (5.0, 1.0), 5.0, 3.0, (5.0, 3.0));
+        let v = evaluate_bezier(&k1, &k2, 5.0);
+        // Should not panic or produce NaN.
+        assert!(v.is_finite(), "same-frame bezier produced non-finite: {v}");
+    }
+
+    #[test]
+    fn bezier_no_nan_with_extreme_handles() {
+        // Handles far outside the range.
+        let (k1, k2) = make_bezier_pair(0.0, 0.0, (100.0, 50.0), 10.0, 5.0, (-90.0, -45.0));
+        let v = evaluate_bezier(&k1, &k2, 5.0);
+        assert!(v.is_finite(), "extreme handles produced non-finite: {v}");
+    }
+
+    #[test]
+    fn cubic_solver_degenerate_linear() {
+        // c3 = 0, c2 = 0 => linear root
+        let roots = solve_cubic(2.0, -4.0, 0.0, 0.0);
+        assert_eq!(roots.len(), 1);
+        assert!((roots[0] - 0.5).abs() < 1e-9);
+    }
+
+    #[test]
+    fn cubic_solver_degenerate_quadratic() {
+        // c3 = 0 => quadratic
+        let roots = solve_cubic(0.0, -3.0, 2.0, 0.0);
+        assert!(!roots.is_empty());
+    }
+
+    #[test]
+    fn cubic_solver_three_real_roots() {
+        // t(t-0.5)(t-1) = t^3 - 1.5t^2 + 0.5t
+        let roots = solve_cubic(0.0, 0.5, -1.5, 1.0);
+        assert!(roots.len() >= 2, "expected multiple roots, got {}", roots.len());
+    }
+
+    #[test]
+    fn berekeny_endpoints() {
+        let v0 = berekeny(0.0, 1.0, 2.0, 3.0, 0.0);
+        let v1 = berekeny(0.0, 1.0, 2.0, 3.0, 1.0);
+        assert!((v0 - 0.0).abs() < 1e-12);
+        assert!((v1 - 3.0).abs() < 1e-12);
+    }
 }

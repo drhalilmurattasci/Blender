@@ -106,3 +106,109 @@ fn accumulate_channel(
         });
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::strip::NlaStrip;
+    use crate::track::{NlaStack, NlaTrack};
+    use crate::NlaExtrapolation;
+
+    fn simple_action_lookup(action_name: &str, frame: f32) -> Vec<(String, u32, f32)> {
+        match action_name {
+            "walk" => vec![("location".to_string(), 0, frame * 0.1)],
+            "run" => vec![("location".to_string(), 0, frame * 0.3)],
+            _ => vec![],
+        }
+    }
+
+    fn rest_value(_path: &str, _index: u32) -> f32 {
+        0.0
+    }
+
+    #[test]
+    fn empty_stack_returns_empty() {
+        let stack = NlaStack::new();
+        let results = evaluate_nla_stack(&stack, 5.0, &simple_action_lookup, &rest_value);
+        assert!(results.is_empty());
+    }
+
+    #[test]
+    fn single_track_single_strip() {
+        let mut stack = NlaStack::new();
+        let mut track = NlaTrack::new("Track 1");
+        let mut strip = NlaStrip::new("Walk", "walk", 0.0, 20.0);
+        strip.action_start = 0.0;
+        strip.action_end = 20.0;
+        strip.extrapolation = NlaExtrapolation::Nothing;
+        track.add_strip(strip);
+        stack.push_track(track);
+
+        let results = evaluate_nla_stack(&stack, 10.0, &simple_action_lookup, &rest_value);
+        assert_eq!(results.len(), 1);
+        assert!((results[0].value - 1.0).abs() < 1e-4, "10.0 * 0.1 = 1.0, got {}", results[0].value);
+    }
+
+    #[test]
+    fn muted_track_skipped() {
+        let mut stack = NlaStack::new();
+        let mut track = NlaTrack::new("Muted");
+        track.muted = true;
+        let mut strip = NlaStrip::new("Walk", "walk", 0.0, 20.0);
+        strip.action_start = 0.0;
+        strip.action_end = 20.0;
+        strip.extrapolation = NlaExtrapolation::Nothing;
+        track.add_strip(strip);
+        stack.push_track(track);
+
+        let results = evaluate_nla_stack(&stack, 10.0, &simple_action_lookup, &rest_value);
+        assert!(results.is_empty());
+    }
+
+    #[test]
+    fn solo_track_only() {
+        let mut stack = NlaStack::new();
+
+        // Track 1: not solo.
+        let mut track1 = NlaTrack::new("Track 1");
+        let mut strip1 = NlaStrip::new("Walk", "walk", 0.0, 20.0);
+        strip1.action_start = 0.0;
+        strip1.action_end = 20.0;
+        strip1.extrapolation = NlaExtrapolation::Nothing;
+        track1.add_strip(strip1);
+        stack.push_track(track1);
+
+        // Track 2: solo.
+        let mut track2 = NlaTrack::new("Track 2");
+        track2.solo = true;
+        let mut strip2 = NlaStrip::new("Run", "run", 0.0, 20.0);
+        strip2.action_start = 0.0;
+        strip2.action_end = 20.0;
+        strip2.extrapolation = NlaExtrapolation::Nothing;
+        track2.add_strip(strip2);
+        stack.push_track(track2);
+
+        let results = evaluate_nla_stack(&stack, 10.0, &simple_action_lookup, &rest_value);
+        assert_eq!(results.len(), 1);
+        // Should be run (0.3 * 10 = 3.0), not walk.
+        assert!((results[0].value - 3.0).abs() < 1e-4, "solo should pick run, got {}", results[0].value);
+    }
+
+    #[test]
+    fn strip_influence_less_than_one() {
+        let mut stack = NlaStack::new();
+        let mut track = NlaTrack::new("Track 1");
+        let mut strip = NlaStrip::new("Walk", "walk", 0.0, 20.0);
+        strip.action_start = 0.0;
+        strip.action_end = 20.0;
+        strip.influence = 0.5;
+        strip.extrapolation = NlaExtrapolation::Nothing;
+        track.add_strip(strip);
+        stack.push_track(track);
+
+        let results = evaluate_nla_stack(&stack, 10.0, &simple_action_lookup, &rest_value);
+        assert_eq!(results.len(), 1);
+        // Replace blend: rest * (1 - 0.5) + 1.0 * 0.5 = 0.5
+        assert!((results[0].value - 0.5).abs() < 1e-4, "expected 0.5, got {}", results[0].value);
+    }
+}

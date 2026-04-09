@@ -153,7 +153,7 @@ impl Quat {
 }
 
 /// All six Euler rotation orders supported by Blender.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum EulerOrder {
     XYZ,
     XZY,
@@ -163,10 +163,36 @@ pub enum EulerOrder {
     ZYX,
 }
 
+impl Default for EulerOrder {
+    #[inline]
+    fn default() -> Self {
+        Self::XYZ
+    }
+}
+
+impl std::fmt::Display for EulerOrder {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::XYZ => write!(f, "XYZ"),
+            Self::XZY => write!(f, "XZY"),
+            Self::YXZ => write!(f, "YXZ"),
+            Self::YZX => write!(f, "YZX"),
+            Self::ZXY => write!(f, "ZXY"),
+            Self::ZYX => write!(f, "ZYX"),
+        }
+    }
+}
+
 impl Default for Quat {
     #[inline]
     fn default() -> Self {
         Self::IDENTITY
+    }
+}
+
+impl std::fmt::Display for Quat {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "Quat({}, {}, {}, {})", self.0.x, self.0.y, self.0.z, self.0.w)
     }
 }
 

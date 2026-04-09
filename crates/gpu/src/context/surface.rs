@@ -16,6 +16,9 @@ impl<'window> GpuSurface<'window> {
         height: u32,
     ) -> GpuResult<Self> {
         let caps = surface.get_capabilities(adapter);
+        if caps.formats.is_empty() {
+            return Err(GpuError::SurfaceConfig);
+        }
         let format = caps
             .formats
             .iter()
@@ -29,13 +32,19 @@ impl<'window> GpuSurface<'window> {
             wgpu::PresentMode::Fifo
         };
 
+        let alpha_mode = caps
+            .alpha_modes
+            .first()
+            .copied()
+            .unwrap_or(wgpu::CompositeAlphaMode::Auto);
+
         let config = wgpu::SurfaceConfiguration {
             usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
             format,
             width,
             height,
             present_mode,
-            alpha_mode: caps.alpha_modes[0],
+            alpha_mode,
             view_formats: vec![],
             desired_maximum_frame_latency: 2,
         };

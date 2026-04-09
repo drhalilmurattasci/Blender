@@ -65,6 +65,16 @@ impl<T> fmt::Debug for Handle<T> {
     }
 }
 
+impl<T> fmt::Display for Handle<T> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        if self.is_dangling() {
+            write!(f, "Handle(dangling)")
+        } else {
+            write!(f, "Handle({}, gen={})", self.index, self.generation)
+        }
+    }
+}
+
 impl<T> Handle<T> {
     /// Creates a new handle from raw parts.
     ///
@@ -135,5 +145,27 @@ mod tests {
         let a = Handle::<u32>::new(1, 1);
         let b = a; // copy
         assert_eq!(a, b);
+    }
+
+    #[test]
+    fn handle_display() {
+        let h = Handle::<u32>::new(5, 3);
+        let s = format!("{h}");
+        assert!(s.contains("5"));
+        assert!(s.contains("3"));
+
+        let d = Handle::<u32>::dangling();
+        let s = format!("{d}");
+        assert!(s.contains("dangling"));
+    }
+
+    #[test]
+    fn handle_hash_consistency() {
+        use std::collections::HashSet;
+        let h1 = Handle::<u32>::new(1, 1);
+        let h2 = Handle::<u32>::new(1, 1);
+        let mut set = HashSet::new();
+        set.insert(h1);
+        assert!(set.contains(&h2));
     }
 }

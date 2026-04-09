@@ -28,6 +28,7 @@ impl<'a> FaceVerts<'a> {
 impl<'a> Iterator for FaceVerts<'a> {
     type Item = Handle<Vert>;
 
+    #[inline]
     fn next(&mut self) -> Option<Self::Item> {
         let loop_h = self.inner.next()?;
         let l = self.loops.get(loop_h)?;
@@ -58,6 +59,7 @@ impl<'a> FaceEdges<'a> {
 impl<'a> Iterator for FaceEdges<'a> {
     type Item = Handle<Edge>;
 
+    #[inline]
     fn next(&mut self) -> Option<Self::Item> {
         let loop_h = self.inner.next()?;
         let l = self.loops.get(loop_h)?;

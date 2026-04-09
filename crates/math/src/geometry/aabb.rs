@@ -126,6 +126,12 @@ impl Default for Aabb {
     }
 }
 
+impl std::fmt::Display for Aabb {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "Aabb(min={}, max={})", self.min, self.max)
+    }
+}
+
 impl ApproxEq for Aabb {
     #[inline]
     fn approx_eq(&self, other: &Self, epsilon: f32) -> bool {
@@ -158,5 +164,56 @@ mod tests {
         let aabb = Aabb::empty().expand(Vec3::ZERO).expand(Vec3::ONE);
         assert!(aabb.min.approx_eq(&Vec3::ZERO, 1e-6));
         assert!(aabb.max.approx_eq(&Vec3::ONE, 1e-6));
+    }
+
+    #[test]
+    fn test_center_half_extents_size() {
+        let aabb = Aabb::new(Vec3::new(-1.0, -2.0, -3.0), Vec3::new(1.0, 2.0, 3.0));
+        assert!(aabb.center().approx_eq(&Vec3::ZERO, 1e-6));
+        assert!(aabb.half_extents().approx_eq(&Vec3::new(1.0, 2.0, 3.0), 1e-6));
+        assert!(aabb.size().approx_eq(&Vec3::new(2.0, 4.0, 6.0), 1e-6));
+    }
+
+    #[test]
+    fn test_merge() {
+        let a = Aabb::new(Vec3::ZERO, Vec3::ONE);
+        let b = Aabb::new(Vec3::new(-1.0, -1.0, -1.0), Vec3::ZERO);
+        let merged = a.merge(&b);
+        assert!(merged.min.approx_eq(&Vec3::new(-1.0, -1.0, -1.0), 1e-6));
+        assert!(merged.max.approx_eq(&Vec3::ONE, 1e-6));
+    }
+
+    #[test]
+    fn test_ray_intersect_hit() {
+        let aabb = Aabb::new(Vec3::new(-1.0, -1.0, -1.0), Vec3::new(1.0, 1.0, 1.0));
+        let origin = Vec3::new(0.0, 0.0, -5.0);
+        let dir = Vec3::Z;
+        let hit = aabb.ray_intersect(origin, dir);
+        assert!(hit.is_some());
+        let (tmin, tmax) = hit.unwrap();
+        assert!((tmin - 4.0).abs() < 1e-6);
+        assert!((tmax - 6.0).abs() < 1e-6);
+    }
+
+    #[test]
+    fn test_ray_intersect_miss() {
+        let aabb = Aabb::new(Vec3::new(-1.0, -1.0, -1.0), Vec3::new(1.0, 1.0, 1.0));
+        let origin = Vec3::new(5.0, 5.0, -5.0);
+        let dir = Vec3::Z;
+        assert!(aabb.ray_intersect(origin, dir).is_none());
+    }
+
+    #[test]
+    fn test_from_center_half_extents() {
+        let aabb = Aabb::from_center_half_extents(Vec3::ZERO, Vec3::ONE);
+        assert!(aabb.min.approx_eq(&Vec3::new(-1.0, -1.0, -1.0), 1e-6));
+        assert!(aabb.max.approx_eq(&Vec3::ONE, 1e-6));
+    }
+
+    #[test]
+    fn test_display() {
+        let aabb = Aabb::new(Vec3::ZERO, Vec3::ONE);
+        let s = format!("{aabb}");
+        assert!(s.starts_with("Aabb("));
     }
 }

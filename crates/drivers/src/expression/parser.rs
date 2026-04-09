@@ -369,3 +369,139 @@ impl<'a> Parser<'a> {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::expression::runtime::ExpressionContext;
+
+    fn eval(source: &str) -> f64 {
+        let expr = parse_expression(source).unwrap();
+        ExpressionContext::new().evaluate(&expr).unwrap()
+    }
+
+    #[test]
+    fn literal() {
+        assert!((eval("42") - 42.0).abs() < 1e-12);
+    }
+
+    #[test]
+    fn addition_subtraction() {
+        assert!((eval("3 + 4 - 1") - 6.0).abs() < 1e-12);
+    }
+
+    #[test]
+    fn mul_div_precedence() {
+        // 2 + 3 * 4 = 14, not 20.
+        assert!((eval("2 + 3 * 4") - 14.0).abs() < 1e-12);
+    }
+
+    #[test]
+    fn parentheses_override_precedence() {
+        assert!((eval("(2 + 3) * 4") - 20.0).abs() < 1e-12);
+    }
+
+    #[test]
+    fn power_right_associative() {
+        // 2 ^ 3 ^ 2 = 2 ^ 9 = 512
+        assert!((eval("2 ^ 3 ^ 2") - 512.0).abs() < 1e-6);
+    }
+
+    #[test]
+    fn unary_minus() {
+        assert!((eval("-5") - -5.0).abs() < 1e-12);
+        assert!((eval("--5") - 5.0).abs() < 1e-12);
+    }
+
+    #[test]
+    fn unary_plus() {
+        assert!((eval("+5") - 5.0).abs() < 1e-12);
+        assert!((eval("+-5") - -5.0).abs() < 1e-12);
+    }
+
+    #[test]
+    fn nested_function_calls() {
+        assert!((eval("max(min(3, 5), 1)") - 3.0).abs() < 1e-12);
+    }
+
+    #[test]
+    fn function_with_expression_args() {
+        assert!((eval("max(1 + 2, 2 * 1)") - 3.0).abs() < 1e-12);
+    }
+
+    #[test]
+    fn ternary_conditional() {
+        assert!((eval("1 > 0 ? 10 : 20") - 10.0).abs() < 1e-12);
+        assert!((eval("0 > 1 ? 10 : 20") - 20.0).abs() < 1e-12);
+    }
+
+    #[test]
+    fn comparison_operators() {
+        assert_eq!(eval("3 < 5"), 1.0);
+        assert_eq!(eval("5 < 3"), 0.0);
+        assert_eq!(eval("3 <= 3"), 1.0);
+        assert_eq!(eval("3 >= 4"), 0.0);
+        assert_eq!(eval("5 == 5"), 1.0);
+        assert_eq!(eval("5 != 5"), 0.0);
+    }
+
+    #[test]
+    fn logical_operators() {
+        assert_eq!(eval("1 && 1"), 1.0);
+        assert_eq!(eval("1 && 0"), 0.0);
+        assert_eq!(eval("0 || 1"), 1.0);
+        assert_eq!(eval("0 || 0"), 0.0);
+    }
+
+    #[test]
+    fn keyword_operators() {
+        assert_eq!(eval("1 and 1"), 1.0);
+        assert_eq!(eval("0 or 1"), 1.0);
+    }
+
+    #[test]
+    fn division_by_zero_returns_zero() {
+        assert_eq!(eval("1 / 0"), 0.0);
+    }
+
+    #[test]
+    fn modulo_by_zero_returns_zero() {
+        assert_eq!(eval("5 % 0"), 0.0);
+    }
+
+    #[test]
+    fn scientific_notation() {
+        assert!((eval("1e3") - 1000.0).abs() < 1e-12);
+        assert!((eval("1.5e-2") - 0.015).abs() < 1e-12);
+    }
+
+    #[test]
+    fn double_star_power() {
+        assert!((eval("2 ** 10") - 1024.0).abs() < 1e-6);
+    }
+
+    #[test]
+    fn pi_and_e_constants() {
+        assert!((eval("pi") - std::f64::consts::PI).abs() < 1e-10);
+        assert!((eval("e") - std::f64::consts::E).abs() < 1e-10);
+    }
+
+    #[test]
+    fn sqrt_negative_no_nan() {
+        // Should return 0.0, not NaN.
+        let v = eval("sqrt(-4)");
+        assert!(v.is_finite() && v >= 0.0, "sqrt(-4) = {v}");
+    }
+
+    #[test]
+    fn asin_out_of_range_no_nan() {
+        let v = eval("asin(2.0)");
+        assert!(v.is_finite(), "asin(2.0) = {v}");
+    }
+
+    #[test]
+    fn log_zero_not_nan() {
+        let v = eval("log(0)");
+        assert!(!v.is_nan(), "log(0) should not be NaN, got {v}");
+    }
+}

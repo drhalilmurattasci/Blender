@@ -178,6 +178,18 @@ impl Default for Mat4 {
     }
 }
 
+impl std::fmt::Display for Mat4 {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let a = self.to_cols_array();
+        write!(
+            f,
+            "Mat4([{}, {}, {}, {} | {}, {}, {}, {} | {}, {}, {}, {} | {}, {}, {}, {}])",
+            a[0], a[1], a[2], a[3], a[4], a[5], a[6], a[7],
+            a[8], a[9], a[10], a[11], a[12], a[13], a[14], a[15]
+        )
+    }
+}
+
 impl From<glam::Mat4> for Mat4 {
     #[inline]
     fn from(m: glam::Mat4) -> Self {

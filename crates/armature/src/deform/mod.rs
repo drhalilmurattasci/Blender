@@ -4,7 +4,7 @@ mod linear;
 mod dual_quaternion;
 
 pub use linear::{linear_blend_skinning, linear_blend_skinning_normals};
-pub use dual_quaternion::dual_quaternion_skinning;
+pub use dual_quaternion::{dual_quaternion_skinning, dual_quaternion_skinning_normals};
 
 /// A vertex weight: which bone influences this vertex and by how much.
 #[derive(Debug, Clone, Copy)]

@@ -140,6 +140,12 @@ impl Default for Vec3 {
     }
 }
 
+impl std::fmt::Display for Vec3 {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "({}, {}, {})", self.0.x, self.0.y, self.0.z)
+    }
+}
+
 impl From<glam::Vec3A> for Vec3 {
     #[inline]
     fn from(v: glam::Vec3A) -> Self {
@@ -350,5 +356,38 @@ mod tests {
         let json = serde_json::to_string(&v).unwrap();
         let v2: Vec3 = serde_json::from_str(&json).unwrap();
         assert!(v.approx_eq(&v2, 1e-6));
+    }
+
+    #[test]
+    fn test_normalize_or_zero() {
+        let v = Vec3::ZERO;
+        assert!(v.normalize_or_zero().approx_eq(&Vec3::ZERO, 1e-6));
+        let v2 = Vec3::new(0.0, 3.0, 4.0);
+        let n = v2.normalize_or_zero();
+        assert!((n.length() - 1.0).abs() < 1e-6);
+    }
+
+    #[test]
+    fn test_display() {
+        let v = Vec3::new(1.0, 2.0, 3.0);
+        let s = format!("{v}");
+        assert!(s.contains("1"));
+        assert!(s.contains("2"));
+        assert!(s.contains("3"));
+    }
+
+    #[test]
+    fn test_neg() {
+        let v = Vec3::new(1.0, -2.0, 3.0);
+        let n = -v;
+        assert!(n.approx_eq(&Vec3::new(-1.0, 2.0, -3.0), 1e-6));
+    }
+
+    #[test]
+    fn test_from_array_roundtrip() {
+        let arr = [1.0_f32, 2.0, 3.0];
+        let v: Vec3 = arr.into();
+        let arr2: [f32; 3] = v.into();
+        assert_eq!(arr, arr2);
     }
 }

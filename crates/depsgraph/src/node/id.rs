@@ -34,7 +34,7 @@ pub enum IdType {
 /// An ID node in the dependency graph.
 ///
 /// Represents a single data-block (e.g., one Object, one Mesh).
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct IdNode {
     /// Name of the data block.
     pub name: String,

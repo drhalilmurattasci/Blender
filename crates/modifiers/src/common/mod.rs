@@ -152,8 +152,8 @@ impl ModifierStack {
     }
 
     /// Get a mutable modifier by index.
-    pub fn get_mut(&mut self, index: usize) -> Option<&mut (dyn Modifier + '_)> {
-        self.modifiers.get_mut(index).map(|m| m.as_mut() as &mut (dyn Modifier + '_))
+    pub fn get_mut(&mut self, index: usize) -> Option<&mut (dyn Modifier + 'static)> {
+        self.modifiers.get_mut(index).map(|m| m.as_mut())
     }
 
     /// Apply all enabled modifiers in order.
@@ -169,5 +169,26 @@ impl ModifierStack {
     /// Iterate immutably.
     pub fn iter(&self) -> impl Iterator<Item = &dyn Modifier> {
         self.modifiers.iter().map(|m| m.as_ref())
+    }
+
+    /// Iterate mutably.
+    pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut (dyn Modifier + 'static)> + '_ {
+        self.modifiers.iter_mut().map(|m| m.as_mut())
+    }
+}
+
+impl std::fmt::Debug for ModifierStack {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("ModifierStack")
+            .field("len", &self.modifiers.len())
+            .field(
+                "modifiers",
+                &self
+                    .modifiers
+                    .iter()
+                    .map(|m| format!("{}({:?})", m.name(), m.modifier_type()))
+                    .collect::<Vec<_>>(),
+            )
+            .finish()
     }
 }

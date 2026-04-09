@@ -6,11 +6,14 @@ mod id;
 pub use component::{ComponentNode, ComponentType};
 pub use id::{IdNode, IdType};
 
+// Re-export DepNode and DepNodeType at the module level.
+// (They are defined in this file, so they are already public.)
+
 use crate::tag::DirtyTags;
 use crate::NodeId;
 
 /// A node in the dependency graph.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct DepNode {
     /// Unique ID within the graph.
     pub id: NodeId,

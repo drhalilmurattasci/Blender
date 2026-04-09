@@ -1,11 +1,13 @@
-//! Tracking constraints: aim-at, track-to, damped-track, locked-track.
+//! Tracking constraints: aim-at, track-to, damped-track, locked-track, stretch-to.
 
 mod damped_track;
 mod locked_track;
+mod stretch_to;
 mod track_to;
 
 pub use damped_track::DampedTrack;
 pub use locked_track::LockedTrack;
+pub use stretch_to::{StretchTo, VolumeMode};
 pub use track_to::TrackTo;
 
 use serde::{Deserialize, Serialize};

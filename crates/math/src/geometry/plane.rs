@@ -59,6 +59,12 @@ impl Plane {
     }
 }
 
+impl std::fmt::Display for Plane {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "Plane(normal={}, distance={})", self.normal, self.distance)
+    }
+}
+
 impl ApproxEq for Plane {
     #[inline]
     fn approx_eq(&self, other: &Self, epsilon: f32) -> bool {

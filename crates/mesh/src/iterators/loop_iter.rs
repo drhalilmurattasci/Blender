@@ -26,6 +26,7 @@ impl<'a> FaceLoops<'a> {
 impl<'a> Iterator for FaceLoops<'a> {
     type Item = Handle<LoopElem>;
 
+    #[inline]
     fn next(&mut self) -> Option<Self::Item> {
         self.inner.next()
     }

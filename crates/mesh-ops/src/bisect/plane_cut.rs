@@ -1,5 +1,7 @@
 //! Bisect with a plane — cuts the mesh along a plane, splitting faces.
 
+use std::collections::HashMap;
+
 use forge3d_alloc::Handle;
 use forge3d_mesh::{Face, Mesh, Vert};
 
@@ -19,7 +21,8 @@ pub fn plane_cut(mesh: &mut Mesh, params: &BisectParams) -> OpResult<()> {
     }
 
     // Classify each vertex as above (+), below (-), or on the plane.
-    let vert_data: Vec<(Handle<Vert>, f32)> = mesh
+    // Use a HashMap for O(1) lookups instead of O(n) linear scans.
+    let vert_dist: HashMap<Handle<Vert>, f32> = mesh
         .verts
         .iter()
         .map(|(h, v)| {
@@ -29,11 +32,7 @@ pub fn plane_cut(mesh: &mut Mesh, params: &BisectParams) -> OpResult<()> {
         .collect();
 
     let classify = |vh: Handle<Vert>| -> f32 {
-        vert_data
-            .iter()
-            .find(|(h, _)| *h == vh)
-            .map(|(_, d)| *d)
-            .unwrap_or(0.0)
+        vert_dist.get(&vh).copied().unwrap_or(0.0)
     };
 
     // Collect faces that straddle the plane.

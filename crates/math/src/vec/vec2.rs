@@ -1,5 +1,6 @@
 use bytemuck::{Pod, Zeroable};
 use serde::{Deserialize, Serialize};
+use std::fmt;
 use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign};
 
 use crate::traits::{ApproxEq, Lerp};
@@ -115,6 +116,12 @@ impl Default for Vec2 {
     #[inline]
     fn default() -> Self {
         Self::ZERO
+    }
+}
+
+impl fmt::Display for Vec2 {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "({}, {})", self.x, self.y)
     }
 }
 
@@ -253,5 +260,49 @@ mod tests {
         let v = Vec2::new(1.0, 2.0);
         let bytes = bytemuck::bytes_of(&v);
         assert_eq!(bytes.len(), 8);
+    }
+
+    #[test]
+    fn test_normalize() {
+        let v = Vec2::new(3.0, 4.0);
+        let n = v.normalize();
+        assert!((n.length() - 1.0).abs() < 1e-6);
+        assert!((n.x - 0.6).abs() < 1e-6);
+        assert!((n.y - 0.8).abs() < 1e-6);
+    }
+
+    #[test]
+    fn test_distance() {
+        let a = Vec2::new(0.0, 0.0);
+        let b = Vec2::new(3.0, 4.0);
+        assert!((a.distance(b) - 5.0).abs() < 1e-6);
+    }
+
+    #[test]
+    fn test_min_max_abs() {
+        let a = Vec2::new(-3.0, 5.0);
+        let b = Vec2::new(2.0, -1.0);
+        assert_eq!(a.min(b), Vec2::new(-3.0, -1.0));
+        assert_eq!(a.max(b), Vec2::new(2.0, 5.0));
+        assert_eq!(a.abs(), Vec2::new(3.0, 5.0));
+    }
+
+    #[test]
+    fn test_neg() {
+        let v = Vec2::new(1.0, -2.0);
+        assert_eq!(-v, Vec2::new(-1.0, 2.0));
+    }
+
+    #[test]
+    fn test_display() {
+        let v = Vec2::new(1.0, 2.0);
+        let s = format!("{v}");
+        assert!(s.contains("1"));
+        assert!(s.contains("2"));
+    }
+
+    #[test]
+    fn test_default() {
+        assert_eq!(Vec2::default(), Vec2::ZERO);
     }
 }

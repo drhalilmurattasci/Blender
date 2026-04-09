@@ -59,7 +59,9 @@ pub fn linear_blend_skinning(
 
 /// Apply linear blend skinning to vertex normals.
 ///
-/// Same as `linear_blend_skinning` but for direction vectors (no translation).
+/// Normals must be transformed by the **transpose of the inverse** of the
+/// upper-left 3x3 of each deform matrix. Using the plain matrix is only
+/// correct for pure rotations; with non-uniform scale it distorts normals.
 pub fn linear_blend_skinning_normals(
     normals: &[[f32; 3]],
     influences: &[VertexInfluences],
@@ -68,6 +70,19 @@ pub fn linear_blend_skinning_normals(
 ) {
     debug_assert_eq!(normals.len(), influences.len());
     debug_assert_eq!(normals.len(), output.len());
+
+    // Pre-compute the inverse-transpose of the upper-left 3x3 for each bone.
+    let normal_matrices: Vec<[f32; 9]> = deform_matrices
+        .iter()
+        .map(|m| {
+            let mat3 = [
+                m[0], m[1], m[2], // column 0
+                m[4], m[5], m[6], // column 1
+                m[8], m[9], m[10], // column 2
+            ];
+            inverse_transpose_3x3(mat3)
+        })
+        .collect();
 
     for (i, (normal, inf)) in normals.iter().zip(influences.iter()).enumerate() {
         // Compute total weight for normalization.
@@ -89,16 +104,16 @@ pub fn linear_blend_skinning_normals(
 
         for vw in &inf.weights {
             let bone_idx = vw.bone_index as usize;
-            if bone_idx >= deform_matrices.len() {
+            if bone_idx >= normal_matrices.len() {
                 continue;
             }
             let w = vw.weight * norm;
-            let m = &deform_matrices[bone_idx];
+            let n = &normal_matrices[bone_idx];
 
-            // Transform direction (no translation).
-            let x = m[0] * normal[0] + m[4] * normal[1] + m[8] * normal[2];
-            let y = m[1] * normal[0] + m[5] * normal[1] + m[9] * normal[2];
-            let z = m[2] * normal[0] + m[6] * normal[1] + m[10] * normal[2];
+            // Transform normal by inverse-transpose 3x3 (column-major: n[col*3+row]).
+            let x = n[0] * normal[0] + n[3] * normal[1] + n[6] * normal[2];
+            let y = n[1] * normal[0] + n[4] * normal[1] + n[7] * normal[2];
+            let z = n[2] * normal[0] + n[5] * normal[1] + n[8] * normal[2];
 
             result[0] += x * w;
             result[1] += y * w;
@@ -115,4 +130,43 @@ pub fn linear_blend_skinning_normals(
 
         output[i] = result;
     }
+}
+
+/// Compute the inverse-transpose of a 3x3 column-major matrix.
+/// Falls back to the original matrix if the determinant is near zero
+/// (degenerate scale), which preserves correct behavior for pure rotations.
+fn inverse_transpose_3x3(m: [f32; 9]) -> [f32; 9] {
+    // m is column-major: m[col*3+row]
+    // m[0..3] = col0, m[3..6] = col1, m[6..9] = col2
+    let a00 = m[0]; let a10 = m[1]; let a20 = m[2];
+    let a01 = m[3]; let a11 = m[4]; let a21 = m[5];
+    let a02 = m[6]; let a12 = m[7]; let a22 = m[8];
+
+    // Cofactor matrix (the transpose of the adjugate is the inverse-transpose * det).
+    let c00 = a11 * a22 - a12 * a21;
+    let c01 = a12 * a20 - a10 * a22;
+    let c02 = a10 * a21 - a11 * a20;
+    let c10 = a02 * a21 - a01 * a22;
+    let c11 = a00 * a22 - a02 * a20;
+    let c12 = a01 * a20 - a00 * a21;
+    let c20 = a01 * a12 - a02 * a11;
+    let c21 = a02 * a10 - a00 * a12;
+    let c22 = a00 * a11 - a01 * a10;
+
+    let det = a00 * c00 + a01 * c01 + a02 * c02;
+
+    if det.abs() < f32::EPSILON {
+        // Singular matrix; fall back to the original (works for pure rotations).
+        return m;
+    }
+
+    let inv_det = 1.0 / det;
+
+    // The cofactor matrix IS the transpose of the adjugate, so the cofactor
+    // matrix divided by det gives us (M^-1)^T directly, stored column-major.
+    [
+        c00 * inv_det, c01 * inv_det, c02 * inv_det, // column 0
+        c10 * inv_det, c11 * inv_det, c12 * inv_det, // column 1
+        c20 * inv_det, c21 * inv_det, c22 * inv_det, // column 2
+    ]
 }

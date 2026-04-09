@@ -95,15 +95,15 @@ impl Color4f {
         ]
     }
 
-    /// Convert to sRGB u8 values (0..255).
+    /// Convert to sRGB u8 values (0..255), clamping to the valid range.
     #[inline]
     pub fn to_srgb_u8(self) -> [u8; 4] {
         let srgb = self.to_srgb();
         [
-            (srgb[0] * 255.0 + 0.5) as u8,
-            (srgb[1] * 255.0 + 0.5) as u8,
-            (srgb[2] * 255.0 + 0.5) as u8,
-            (srgb[3] * 255.0 + 0.5) as u8,
+            (srgb[0].clamp(0.0, 1.0) * 255.0 + 0.5) as u8,
+            (srgb[1].clamp(0.0, 1.0) * 255.0 + 0.5) as u8,
+            (srgb[2].clamp(0.0, 1.0) * 255.0 + 0.5) as u8,
+            (srgb[3].clamp(0.0, 1.0) * 255.0 + 0.5) as u8,
         ]
     }
 
@@ -124,6 +124,12 @@ impl Default for Color4f {
     #[inline]
     fn default() -> Self {
         Self::BLACK
+    }
+}
+
+impl std::fmt::Display for Color4f {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "Color4f({}, {}, {}, {})", self.r, self.g, self.b, self.a)
     }
 }
 
@@ -181,5 +187,40 @@ mod tests {
         let c = Color4f::WHITE;
         let bytes = bytemuck::bytes_of(&c);
         assert_eq!(bytes.len(), 16);
+    }
+
+    #[test]
+    fn test_srgb_u8_clamping() {
+        let c = Color4f::new(2.0, -1.0, 0.5, 1.5);
+        let u8s = c.to_srgb_u8();
+        assert_eq!(u8s[0], 255);
+        assert_eq!(u8s[1], 0);
+        assert_eq!(u8s[3], 255); // alpha > 1.0 clamped
+    }
+
+    #[test]
+    fn test_from_srgb_u8() {
+        let c = Color4f::from_srgb_u8(255, 0, 128, 255);
+        let u8s = c.to_srgb_u8();
+        assert_eq!(u8s[0], 255);
+        assert_eq!(u8s[1], 0);
+        assert_eq!(u8s[2], 128);
+        assert_eq!(u8s[3], 255);
+    }
+
+    #[test]
+    fn test_to_rgb() {
+        let c = Color4f::new(1.0, 0.5, 0.0, 0.8);
+        let rgb = c.to_rgb();
+        assert!((rgb.r - 1.0).abs() < 1e-6);
+        assert!((rgb.g - 0.5).abs() < 1e-6);
+        assert!((rgb.b - 0.0).abs() < 1e-6);
+    }
+
+    #[test]
+    fn test_display() {
+        let c = Color4f::WHITE;
+        let s = format!("{c}");
+        assert!(s.starts_with("Color4f("));
     }
 }

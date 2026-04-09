@@ -12,6 +12,7 @@ use crate::{AnimResult, Extrapolation, FrameTime};
 /// 2. Interpolates according to the keyframe's interpolation mode.
 /// 3. Applies extrapolation if outside keyframe range.
 /// 4. Applies modifier stack on top.
+#[inline]
 pub fn evaluate_fcurve(curve: &FCurve, time: FrameTime) -> AnimResult<f32> {
     if curve.muted {
         return Ok(0.0);
@@ -30,6 +31,7 @@ pub fn evaluate_fcurve(curve: &FCurve, time: FrameTime) -> AnimResult<f32> {
 /// 1. Time modifiers adjust the evaluation time.
 /// 2. The curve is evaluated at the remapped time.
 /// 3. Value modifiers adjust the result.
+#[inline]
 fn evaluate_base(curve: &FCurve, time: FrameTime) -> f32 {
     let kfs = &curve.keyframes;
 
@@ -93,6 +95,7 @@ fn apply_cycles_time_remap(curve: &FCurve, time: FrameTime) -> (FrameTime, f32) 
 }
 
 /// Interpolate between two keyframes.
+#[inline]
 fn interpolate_segment(
     k1: &crate::keyframe::Keyframe,
     k2: &crate::keyframe::Keyframe,
@@ -114,6 +117,7 @@ fn interpolate_segment(
     }
 }
 
+#[inline]
 fn apply_easing(mode: InterpolationMode, easing: EasingMode, t: f32) -> f32 {
     match easing {
         EasingMode::EaseIn => interpolation::ease_in(mode, t),
@@ -129,6 +133,7 @@ fn apply_easing(mode: InterpolationMode, easing: EasingMode, t: f32) -> f32 {
 /// - Constant: returns the first keyframe's value.
 /// - Linear: uses the right handle gradient of the first keyframe (for Bezier),
 ///   or the slope to the second keyframe (for Linear interpolation mode).
+#[inline]
 fn extrapolate_before(curve: &FCurve, time: FrameTime) -> f32 {
     let first = &curve.keyframes[0];
     match curve.extrapolation_before {
@@ -171,6 +176,7 @@ fn extrapolate_before(curve: &FCurve, time: FrameTime) -> f32 {
 /// Blender checks `endpoint->ipo` (the last keyframe's own interpolation field).
 /// Even though our interpolation field semantically means "to the next keyframe",
 /// Blender stores and checks the endpoint's own ipo, so we do the same.
+#[inline]
 fn extrapolate_after(curve: &FCurve, time: FrameTime) -> f32 {
     let last = &curve.keyframes[curve.keyframes.len() - 1];
     match curve.extrapolation_after {
@@ -200,5 +206,100 @@ fn extrapolate_after(curve: &FCurve, time: FrameTime) -> f32 {
             last.value + slope * (time - last.time)
         }
         Extrapolation::MakesCyclic => last.value,
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::fcurve::FCurve;
+    use crate::keyframe::Keyframe;
+
+    #[test]
+    fn evaluate_empty_fcurve_returns_zero() {
+        let curve = FCurve::new("test", 0);
+        let result = evaluate_fcurve(&curve, 5.0).unwrap();
+        assert_eq!(result, 0.0);
+    }
+
+    #[test]
+    fn evaluate_muted_fcurve_returns_zero() {
+        let mut curve = FCurve::new("test", 0);
+        curve.insert_keyframe(Keyframe::linear(0.0, 10.0));
+        curve.muted = true;
+        let result = evaluate_fcurve(&curve, 0.0).unwrap();
+        assert_eq!(result, 0.0);
+    }
+
+    #[test]
+    fn evaluate_single_keyframe() {
+        let mut curve = FCurve::new("test", 0);
+        curve.insert_keyframe(Keyframe::linear(5.0, 3.0));
+        // At, before, and after the single keyframe.
+        assert_eq!(evaluate_fcurve(&curve, 5.0).unwrap(), 3.0);
+        assert_eq!(evaluate_fcurve(&curve, 0.0).unwrap(), 3.0);
+        assert_eq!(evaluate_fcurve(&curve, 100.0).unwrap(), 3.0);
+    }
+
+    #[test]
+    fn evaluate_linear_interpolation() {
+        let mut curve = FCurve::new("test", 0);
+        curve.insert_keyframe(Keyframe::linear(0.0, 0.0));
+        curve.insert_keyframe(Keyframe::linear(10.0, 10.0));
+        let v = evaluate_fcurve(&curve, 5.0).unwrap();
+        assert!((v - 5.0).abs() < 1e-4, "expected ~5.0, got {v}");
+    }
+
+    #[test]
+    fn evaluate_constant_interpolation() {
+        let mut curve = FCurve::new("test", 0);
+        curve.insert_keyframe(Keyframe::constant(0.0, 1.0));
+        curve.insert_keyframe(Keyframe::constant(10.0, 5.0));
+        let v = evaluate_fcurve(&curve, 5.0).unwrap();
+        assert_eq!(v, 1.0, "constant should hold first keyframe's value");
+    }
+
+    #[test]
+    fn evaluate_constant_extrapolation_before() {
+        let mut curve = FCurve::new("test", 0);
+        curve.insert_keyframe(Keyframe::linear(5.0, 2.0));
+        curve.insert_keyframe(Keyframe::linear(10.0, 4.0));
+        curve.extrapolation_before = Extrapolation::Constant;
+        let v = evaluate_fcurve(&curve, 0.0).unwrap();
+        assert!((v - 2.0).abs() < 1e-4, "expected first kf value, got {v}");
+    }
+
+    #[test]
+    fn evaluate_linear_extrapolation_after() {
+        let mut curve = FCurve::new("test", 0);
+        curve.insert_keyframe(Keyframe::linear(0.0, 0.0));
+        curve.insert_keyframe(Keyframe::linear(10.0, 10.0));
+        curve.extrapolation_after = Extrapolation::Linear;
+        let v = evaluate_fcurve(&curve, 20.0).unwrap();
+        assert!((v - 20.0).abs() < 1e-3, "expected ~20.0, got {v}");
+    }
+
+    #[test]
+    fn evaluate_duplicate_keyframes_at_same_frame() {
+        // insert_keyframe replaces keyframes at the same time.
+        let mut curve = FCurve::new("test", 0);
+        curve.insert_keyframe(Keyframe::linear(5.0, 1.0));
+        curve.insert_keyframe(Keyframe::linear(5.0, 99.0));
+        assert_eq!(curve.keyframe_count(), 1);
+        let v = evaluate_fcurve(&curve, 5.0).unwrap();
+        assert!((v - 99.0).abs() < 1e-4, "expected replaced value, got {v}");
+    }
+
+    #[test]
+    fn evaluate_no_nan() {
+        // Test many evaluation points for NaN.
+        let mut curve = FCurve::new("test", 0);
+        curve.insert_keyframe(Keyframe::new(0.0, 0.0));
+        curve.insert_keyframe(Keyframe::new(10.0, 5.0));
+        for i in -20..30 {
+            let t = i as f32;
+            let v = evaluate_fcurve(&curve, t).unwrap();
+            assert!(v.is_finite(), "NaN/inf at frame {t}: {v}");
+        }
     }
 }

@@ -67,13 +67,19 @@ pub enum Field {
 }
 
 /// Concrete field value.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum FieldValue {
     Float(f32),
     Int(i32),
     Bool(bool),
     Vector([f32; 3]),
     Color([f32; 4]),
+}
+
+impl Default for FieldValue {
+    fn default() -> Self {
+        Self::Float(0.0)
+    }
 }
 
 /// Unary math operations.

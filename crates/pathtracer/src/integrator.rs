@@ -60,7 +60,10 @@ impl PathIntegrator {
                 }
             };
 
-            let material = &scene.materials[hit.material_id as usize];
+            let material = match scene.materials.get(hit.material_id as usize) {
+                Some(m) => m,
+                None => break, // invalid material ID -- terminate path
+            };
 
             // Add emission (only on first bounce or via MIS for subsequent bounces)
             if material.is_emissive() {

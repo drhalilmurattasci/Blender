@@ -151,6 +151,7 @@ impl<'a> RadialIter<'a> {
 impl<'a> Iterator for RadialIter<'a> {
     type Item = Handle<LoopElem>;
 
+    #[inline]
     fn next(&mut self) -> Option<Self::Item> {
         if self.done || self.remaining == 0 {
             return None;

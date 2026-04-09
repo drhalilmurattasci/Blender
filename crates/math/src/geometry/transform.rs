@@ -105,6 +105,16 @@ impl Default for Transform {
     }
 }
 
+impl std::fmt::Display for Transform {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "Transform(pos={}, rot={}, scale={})",
+            self.position, self.rotation, self.scale
+        )
+    }
+}
+
 impl Lerp for Transform {
     #[inline]
     fn lerp(self, other: Self, t: f32) -> Self {
@@ -146,6 +156,37 @@ mod tests {
         let m = t.to_matrix();
         let t2 = Transform::from_matrix(&m).unwrap();
         assert!(t.approx_eq(&t2, 1e-4));
+    }
+
+    #[test]
+    fn test_inverse() {
+        let t = Transform::new(
+            Vec3::new(1.0, 2.0, 3.0),
+            Quat::from_axis_angle(Vec3::Y, 0.5),
+            Vec3::new(2.0, 2.0, 2.0),
+        );
+        let inv = t.inverse();
+        let p = Vec3::new(5.0, 6.0, 7.0);
+        let transformed = t.transform_point(p);
+        let recovered = inv.transform_point(transformed);
+        assert!(recovered.approx_eq(&p, 1e-4));
+    }
+
+    #[test]
+    fn test_then() {
+        let a = Transform::from_translation(Vec3::new(1.0, 0.0, 0.0));
+        let b = Transform::from_translation(Vec3::new(0.0, 2.0, 0.0));
+        let combined = a.then(&b);
+        let p = Vec3::ZERO;
+        let result = combined.transform_point(p);
+        assert!(result.approx_eq(&Vec3::new(1.0, 2.0, 0.0), 1e-6));
+    }
+
+    #[test]
+    fn test_display() {
+        let t = Transform::IDENTITY;
+        let s = format!("{t}");
+        assert!(s.starts_with("Transform("));
     }
 
     #[test]

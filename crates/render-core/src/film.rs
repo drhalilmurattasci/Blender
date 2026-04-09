@@ -32,8 +32,13 @@ impl Film {
     }
 
     /// Get the averaged color at a pixel.
+    ///
+    /// Returns `[0.0; 3]` for out-of-bounds coordinates instead of panicking.
     pub fn get_pixel(&self, x: u32, y: u32) -> [f32; 3] {
         let idx = (y * self.width + x) as usize;
+        if idx >= self.pixels.len() {
+            return [0.0; 3];
+        }
         let count = self.sample_counts[idx].max(1) as f32;
         [
             self.pixels[idx][0] / count,
@@ -53,15 +58,20 @@ impl Film {
         (self.width * self.height) as usize
     }
 
-    /// Convert the film to an 8-bit RGBA image buffer with sRGB gamma encoding.
+    /// Convert the film to an 8-bit RGBA image buffer with Reinhard tone mapping
+    /// and sRGB gamma encoding.
     pub fn to_rgba8(&self) -> Vec<u8> {
         let mut buf = Vec::with_capacity(self.pixel_count() * 4);
         for y in 0..self.height {
             for x in 0..self.width {
                 let c = self.get_pixel(x, y);
-                buf.push(Self::linear_to_srgb(c[0]));
-                buf.push(Self::linear_to_srgb(c[1]));
-                buf.push(Self::linear_to_srgb(c[2]));
+                // Apply Reinhard tone mapping to handle HDR values before sRGB encoding.
+                let r = c[0].max(0.0) / (1.0 + c[0].max(0.0));
+                let g = c[1].max(0.0) / (1.0 + c[1].max(0.0));
+                let b = c[2].max(0.0) / (1.0 + c[2].max(0.0));
+                buf.push(Self::linear_to_srgb(r));
+                buf.push(Self::linear_to_srgb(g));
+                buf.push(Self::linear_to_srgb(b));
                 buf.push(255);
             }
         }
@@ -91,10 +101,14 @@ impl Film {
                 } else {
                     [0.0; 3]
                 };
+                // Clamp negative values before Reinhard to avoid pass-through of invalid radiance.
+                let r = c[0].max(0.0);
+                let g = c[1].max(0.0);
+                let b = c[2].max(0.0);
                 [
-                    c[0] / (1.0 + c[0]),
-                    c[1] / (1.0 + c[1]),
-                    c[2] / (1.0 + c[2]),
+                    r / (1.0 + r),
+                    g / (1.0 + g),
+                    b / (1.0 + b),
                 ]
             })
             .collect()

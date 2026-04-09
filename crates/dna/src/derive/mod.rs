@@ -184,6 +184,9 @@ impl PropertyPath {
             || name.contains('[')
             || name.contains(']')
             || name.contains(' ')
+            || name.contains('"')
+            || name.contains('\'')
+            || name.contains('\\')
             || name.chars().next().is_some_and(|c| c.is_ascii_digit())
     }
 
@@ -194,8 +197,14 @@ impl PropertyPath {
             match seg {
                 Segment::Field(name) if Self::needs_bracket_quote(name) => {
                     // Emit bracket-quoted notation: ["name"]
+                    // Escape backslashes and double-quotes within the name.
                     out.push_str("[\"");
-                    out.push_str(name);
+                    for ch in name.chars() {
+                        if ch == '"' || ch == '\\' {
+                            out.push('\\');
+                        }
+                        out.push(ch);
+                    }
                     out.push_str("\"]");
                 }
                 Segment::Field(name) => {
@@ -446,6 +455,40 @@ mod tests {
         let old = path.set(&mut root, DnaValue::F32(42.0)).unwrap();
         assert_eq!(old, DnaValue::F32(1.0));
         assert_eq!(path.get(&root), Some(&DnaValue::F32(42.0)));
+    }
+
+    #[test]
+    fn path_to_string_escapes_quotes() {
+        // A field name containing a double-quote should be escaped in output.
+        let p = PropertyPath::parse("[\"key\\\"quote\"]");
+        let s = p.to_string_path();
+        // The output should bracket-quote the field and escape the quote.
+        assert_eq!(s, "[\"key\\\"quote\"]");
+
+        // Roundtrip: parsing the output should yield the same path.
+        let p2 = PropertyPath::parse(&s);
+        assert_eq!(p, p2);
+    }
+
+    #[test]
+    fn display_impl() {
+        let p = PropertyPath::parse("a.b[0].c");
+        assert_eq!(format!("{p}"), "a.b[0].c");
+    }
+
+    #[test]
+    fn empty_path() {
+        let p = PropertyPath::parse("");
+        assert!(p.is_empty());
+        assert_eq!(p.len(), 0);
+    }
+
+    #[test]
+    fn set_empty_path_returns_error() {
+        let p = PropertyPath::parse("");
+        let mut root = DnaValue::F32(1.0);
+        let result = p.set(&mut root, DnaValue::F32(2.0));
+        assert!(matches!(result, Err(PropertyPathError::EmptyPath)));
     }
 
     #[test]
