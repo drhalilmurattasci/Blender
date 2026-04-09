@@ -1,17 +1,18 @@
-//! Forge3D — Blender-like interface using custom `blender_draw` module + egui text.
+//! Forge3D — Clean egui-only Blender-like interface.
 //!
 //! Architecture:
-//!   1. Backgrounds, panels, buttons, separators → blender_draw DrawList → 2D shader
-//!   2. Text labels → egui with Frame::none() (no backgrounds)
-//!   3. 3D viewport → spinning cube via egui_wgpu callback
-//!
-//! All dimensions from Blender DNA_screen_types.h:
-//!   HEADERY=26, UI_UNIT_Y=20, UI_UNIT_X=20, ICON_DEFAULT=16, corner_radius=3
+//!   1. winit window + wgpu surface (NON-sRGB: Bgra8Unorm)
+//!   2. egui-winit + egui-wgpu for ALL UI rendering
+//!   3. egui_wgpu::Callback for the 3D cube in the central panel
+//!   4. One clean render pass — no custom 2D shader, no DrawList
 
 use std::sync::Arc;
 use std::time::Instant;
 
 use bytemuck::{Pod, Zeroable};
+use egui::{
+    Color32, FontId, Frame, Stroke, TextStyle,
+};
 use wgpu::util::DeviceExt;
 use winit::application::ApplicationHandler;
 use winit::event::{ElementState, KeyEvent, WindowEvent};
@@ -19,29 +20,8 @@ use winit::event_loop::{ActiveEventLoop, EventLoop};
 use winit::keyboard::{Key, NamedKey};
 use winit::window::{Window, WindowId};
 
-use forge3d_ui_core::blender_draw::{
-    draw_button, draw_menu_button, draw_number_field, draw_panel_background,
-    draw_panel_header, draw_separator, DrawList, DrawVertex, WidgetState,
-};
-use forge3d_ui_core::blender_draw::theme::{
-    general, outliner, properties, timeline, view3d, wcol, PanelColors,
-};
-use forge3d_ui_core::painter::Rect;
-
 // ---------------------------------------------------------------------------
-// Blender exact dimensions
-// ---------------------------------------------------------------------------
-
-const HEADERY: f32 = 26.0;
-const UI_UNIT_Y: f32 = 20.0;
-const UI_UNIT_X: f32 = 20.0;
-const ICON_DEFAULT: f32 = 16.0;
-const RIGHT_PANEL_W: f32 = 320.0;
-const TIMELINE_H: f32 = 100.0;
-const OL_INDENT: f32 = 1.8 * UI_UNIT_X;
-
-// ---------------------------------------------------------------------------
-// 3D Cube Vertex (for spinning cube)
+// 3D Cube Vertex
 // ---------------------------------------------------------------------------
 
 #[repr(C)]
@@ -68,30 +48,36 @@ impl CubeVertex {
 
 #[rustfmt::skip]
 const CUBE_VERTICES: &[CubeVertex] = &[
-    CubeVertex { position: [-0.5, -0.5,  0.5], color: [1.0, 0.2, 0.2] },
-    CubeVertex { position: [ 0.5, -0.5,  0.5], color: [1.0, 0.4, 0.2] },
-    CubeVertex { position: [ 0.5,  0.5,  0.5], color: [1.0, 0.6, 0.4] },
-    CubeVertex { position: [-0.5,  0.5,  0.5], color: [1.0, 0.3, 0.3] },
-    CubeVertex { position: [-0.5, -0.5, -0.5], color: [0.2, 0.2, 1.0] },
-    CubeVertex { position: [ 0.5, -0.5, -0.5], color: [0.2, 0.4, 1.0] },
-    CubeVertex { position: [ 0.5,  0.5, -0.5], color: [0.4, 0.6, 1.0] },
-    CubeVertex { position: [-0.5,  0.5, -0.5], color: [0.3, 0.3, 1.0] },
-    CubeVertex { position: [-0.5,  0.5, -0.5], color: [0.2, 1.0, 0.2] },
-    CubeVertex { position: [ 0.5,  0.5, -0.5], color: [0.2, 1.0, 0.4] },
-    CubeVertex { position: [ 0.5,  0.5,  0.5], color: [0.4, 1.0, 0.4] },
-    CubeVertex { position: [-0.5,  0.5,  0.5], color: [0.3, 1.0, 0.3] },
-    CubeVertex { position: [-0.5, -0.5, -0.5], color: [1.0, 1.0, 0.2] },
-    CubeVertex { position: [ 0.5, -0.5, -0.5], color: [1.0, 1.0, 0.4] },
-    CubeVertex { position: [ 0.5, -0.5,  0.5], color: [1.0, 1.0, 0.4] },
-    CubeVertex { position: [-0.5, -0.5,  0.5], color: [1.0, 1.0, 0.2] },
-    CubeVertex { position: [ 0.5, -0.5, -0.5], color: [0.2, 1.0, 1.0] },
-    CubeVertex { position: [ 0.5,  0.5, -0.5], color: [0.4, 1.0, 1.0] },
-    CubeVertex { position: [ 0.5,  0.5,  0.5], color: [0.4, 1.0, 1.0] },
-    CubeVertex { position: [ 0.5, -0.5,  0.5], color: [0.2, 1.0, 1.0] },
-    CubeVertex { position: [-0.5, -0.5, -0.5], color: [1.0, 0.2, 1.0] },
-    CubeVertex { position: [-0.5,  0.5, -0.5], color: [1.0, 0.4, 1.0] },
-    CubeVertex { position: [-0.5,  0.5,  0.5], color: [1.0, 0.4, 1.0] },
-    CubeVertex { position: [-0.5, -0.5,  0.5], color: [1.0, 0.2, 1.0] },
+    // Front face (muted red)
+    CubeVertex { position: [-0.5, -0.5,  0.5], color: [0.8, 0.3, 0.3] },
+    CubeVertex { position: [ 0.5, -0.5,  0.5], color: [0.8, 0.3, 0.3] },
+    CubeVertex { position: [ 0.5,  0.5,  0.5], color: [0.8, 0.3, 0.3] },
+    CubeVertex { position: [-0.5,  0.5,  0.5], color: [0.8, 0.3, 0.3] },
+    // Back face (muted blue)
+    CubeVertex { position: [-0.5, -0.5, -0.5], color: [0.3, 0.3, 0.8] },
+    CubeVertex { position: [ 0.5, -0.5, -0.5], color: [0.3, 0.3, 0.8] },
+    CubeVertex { position: [ 0.5,  0.5, -0.5], color: [0.3, 0.3, 0.8] },
+    CubeVertex { position: [-0.5,  0.5, -0.5], color: [0.3, 0.3, 0.8] },
+    // Top face (muted green)
+    CubeVertex { position: [-0.5,  0.5, -0.5], color: [0.3, 0.7, 0.3] },
+    CubeVertex { position: [ 0.5,  0.5, -0.5], color: [0.3, 0.7, 0.3] },
+    CubeVertex { position: [ 0.5,  0.5,  0.5], color: [0.3, 0.7, 0.3] },
+    CubeVertex { position: [-0.5,  0.5,  0.5], color: [0.3, 0.7, 0.3] },
+    // Bottom face (muted yellow)
+    CubeVertex { position: [-0.5, -0.5, -0.5], color: [0.7, 0.7, 0.3] },
+    CubeVertex { position: [ 0.5, -0.5, -0.5], color: [0.7, 0.7, 0.3] },
+    CubeVertex { position: [ 0.5, -0.5,  0.5], color: [0.7, 0.7, 0.3] },
+    CubeVertex { position: [-0.5, -0.5,  0.5], color: [0.7, 0.7, 0.3] },
+    // Right face (muted cyan)
+    CubeVertex { position: [ 0.5, -0.5, -0.5], color: [0.3, 0.7, 0.7] },
+    CubeVertex { position: [ 0.5,  0.5, -0.5], color: [0.3, 0.7, 0.7] },
+    CubeVertex { position: [ 0.5,  0.5,  0.5], color: [0.3, 0.7, 0.7] },
+    CubeVertex { position: [ 0.5, -0.5,  0.5], color: [0.3, 0.7, 0.7] },
+    // Left face (muted magenta)
+    CubeVertex { position: [-0.5, -0.5, -0.5], color: [0.7, 0.3, 0.7] },
+    CubeVertex { position: [-0.5,  0.5, -0.5], color: [0.7, 0.3, 0.7] },
+    CubeVertex { position: [-0.5,  0.5,  0.5], color: [0.7, 0.3, 0.7] },
+    CubeVertex { position: [-0.5, -0.5,  0.5], color: [0.7, 0.3, 0.7] },
 ];
 
 #[rustfmt::skip]
@@ -139,63 +125,6 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
 "#;
 
 // ---------------------------------------------------------------------------
-// 2D UI Shader (WGSL) — draws DrawVertex with pixel coords + u8 colors
-// ---------------------------------------------------------------------------
-
-const UI2D_SHADER_SRC: &str = r#"
-struct Uniforms {
-    screen_size: vec2<f32>,
-    _pad: vec2<f32>,
-};
-@group(0) @binding(0) var<uniform> uniforms: Uniforms;
-
-struct VertexInput {
-    @location(0) pos: vec2<f32>,
-    @location(1) color: vec4<f32>,
-};
-
-struct VertexOutput {
-    @builtin(position) clip_position: vec4<f32>,
-    @location(0) color: vec4<f32>,
-};
-
-@vertex
-fn vs_main(in: VertexInput) -> VertexOutput {
-    var out: VertexOutput;
-    let clip_x = in.pos.x / uniforms.screen_size.x * 2.0 - 1.0;
-    let clip_y = 1.0 - in.pos.y / uniforms.screen_size.y * 2.0;
-    out.clip_position = vec4<f32>(clip_x, clip_y, 0.0, 1.0);
-    out.color = in.color;
-    return out;
-}
-
-@fragment
-fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
-    return in.color;
-}
-"#;
-
-// ---------------------------------------------------------------------------
-// GPU vertex for 2D UI (matches DrawVertex layout but with Pod/Zeroable)
-// ---------------------------------------------------------------------------
-
-#[repr(C)]
-#[derive(Copy, Clone, Pod, Zeroable)]
-struct UiVertex {
-    pos: [f32; 2],
-    color: [u8; 4],
-}
-
-impl UiVertex {
-    fn from_draw_vertex(dv: &DrawVertex) -> Self {
-        Self {
-            pos: dv.pos,
-            color: dv.color,
-        }
-    }
-}
-
-// ---------------------------------------------------------------------------
 // Column-major 4x4 matrix helpers
 // ---------------------------------------------------------------------------
 
@@ -228,6 +157,7 @@ fn mat4_rotate_x(angle: f32) -> [f32; 16] {
     ]
 }
 
+#[allow(dead_code)]
 fn mat4_rotate_z(angle: f32) -> [f32; 16] {
     let (s, c) = (angle.sin(), angle.cos());
     [
@@ -247,6 +177,7 @@ fn mat4_translate(x: f32, y: f32, z: f32) -> [f32; 16] {
     ]
 }
 
+#[allow(dead_code)]
 fn mat4_scale(sx: f32, sy: f32, sz: f32) -> [f32; 16] {
     [
          sx, 0.0, 0.0, 0.0,
@@ -293,7 +224,6 @@ struct SceneObject {
     scale: [f32; 3],
     visible: bool,
     renderable: bool,
-    selectable: bool,
 }
 
 impl SceneObject {
@@ -306,7 +236,15 @@ impl SceneObject {
             scale: scl,
             visible: true,
             renderable: true,
-            selectable: true,
+        }
+    }
+
+    fn icon(&self) -> &'static str {
+        match self.obj_type {
+            "Mesh" => "\u{1F536}",   // orange diamond
+            "Camera" => "\u{1F4F7}", // camera
+            "Light" => "\u{1F4A1}",  // light bulb
+            _ => "\u{25CF}",
         }
     }
 }
@@ -317,20 +255,7 @@ impl SceneObject {
 
 const WORKSPACE_TABS: &[&str] = &[
     "Layout", "Modeling", "Sculpting", "UV Editing",
-    "Texture Paint", "Shading", "Animation", "Rendering",
-    "Compositing", "Geometry Nodes",
-];
-
-const PROP_TABS: &[(&str, &str)] = &[
-    ("\u{1F527}", "Active Tool"),
-    ("\u{1F3AC}", "Scene"),
-    ("\u{1F30D}", "World"),
-    ("\u{25A0}",  "Object"),
-    ("\u{2699}",  "Modifiers"),
-    ("\u{2728}",  "Particles"),
-    ("\u{2301}",  "Physics"),
-    ("\u{1F517}", "Constraints"),
-    ("\u{25B3}",  "Object Data"),
+    "Shading", "Animation", "Rendering",
 ];
 
 // ---------------------------------------------------------------------------
@@ -495,206 +420,86 @@ impl egui_wgpu::CallbackTrait for CubeCallback {
 }
 
 // ---------------------------------------------------------------------------
-// 2D UI GPU resources
+// GPU state
 // ---------------------------------------------------------------------------
 
-struct Ui2dResources {
-    tri_pipeline: wgpu::RenderPipeline,
-    line_pipeline: wgpu::RenderPipeline,
-    uniform_buffer: wgpu::Buffer,
-    bind_group: wgpu::BindGroup,
-}
-
-impl Ui2dResources {
-    fn create(device: &wgpu::Device, target_format: wgpu::TextureFormat) -> Self {
-        let shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
-            label: Some("ui2d-shader"),
-            source: wgpu::ShaderSource::Wgsl(UI2D_SHADER_SRC.into()),
-        });
-
-        let uniform_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-            label: Some("ui2d-uniform"),
-            contents: bytemuck::cast_slice(&[1920.0f32, 1080.0, 0.0, 0.0]),
-            usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
-        });
-
-        let bind_group_layout = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
-            label: Some("ui2d-bgl"),
-            entries: &[wgpu::BindGroupLayoutEntry {
-                binding: 0,
-                visibility: wgpu::ShaderStages::VERTEX,
-                ty: wgpu::BindingType::Buffer {
-                    ty: wgpu::BufferBindingType::Uniform,
-                    has_dynamic_offset: false,
-                    min_binding_size: None,
-                },
-                count: None,
-            }],
-        });
-
-        let bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
-            label: Some("ui2d-bg"),
-            layout: &bind_group_layout,
-            entries: &[wgpu::BindGroupEntry {
-                binding: 0,
-                resource: uniform_buffer.as_entire_binding(),
-            }],
-        });
-
-        let pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
-            label: Some("ui2d-pipeline-layout"),
-            bind_group_layouts: &[&bind_group_layout],
-            push_constant_ranges: &[],
-        });
-
-        // Vertex buffer layout: pos(f32x2) + color(u8x4 normalized)
-        let vertex_layout = wgpu::VertexBufferLayout {
-            array_stride: std::mem::size_of::<UiVertex>() as wgpu::BufferAddress,
-            step_mode: wgpu::VertexStepMode::Vertex,
-            attributes: &[
-                wgpu::VertexAttribute {
-                    offset: 0,
-                    shader_location: 0,
-                    format: wgpu::VertexFormat::Float32x2,
-                },
-                wgpu::VertexAttribute {
-                    offset: 8,
-                    shader_location: 1,
-                    format: wgpu::VertexFormat::Unorm8x4,
-                },
-            ],
-        };
-
-        let make_pipeline = |topology: wgpu::PrimitiveTopology, label: &str| {
-            device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
-                label: Some(label),
-                layout: Some(&pipeline_layout),
-                vertex: wgpu::VertexState {
-                    module: &shader,
-                    entry_point: Some("vs_main"),
-                    compilation_options: Default::default(),
-                    buffers: &[vertex_layout.clone()],
-                },
-                fragment: Some(wgpu::FragmentState {
-                    module: &shader,
-                    entry_point: Some("fs_main"),
-                    compilation_options: Default::default(),
-                    targets: &[Some(wgpu::ColorTargetState {
-                        format: target_format,
-                        blend: Some(wgpu::BlendState::ALPHA_BLENDING),
-                        write_mask: wgpu::ColorWrites::ALL,
-                    })],
-                }),
-                primitive: wgpu::PrimitiveState {
-                    topology,
-                    strip_index_format: None,
-                    front_face: wgpu::FrontFace::Ccw,
-                    cull_mode: None,
-                    polygon_mode: wgpu::PolygonMode::Fill,
-                    unclipped_depth: false,
-                    conservative: false,
-                },
-                depth_stencil: None,
-                multisample: wgpu::MultisampleState::default(),
-                multiview: None,
-                cache: None,
-            })
-        };
-
-        let tri_pipeline = make_pipeline(wgpu::PrimitiveTopology::TriangleList, "ui2d-tri");
-        let line_pipeline = make_pipeline(wgpu::PrimitiveTopology::LineList, "ui2d-line");
-
-        Self {
-            tri_pipeline,
-            line_pipeline,
-            uniform_buffer,
-            bind_group,
-        }
-    }
+struct GpuState {
+    device: wgpu::Device,
+    queue: wgpu::Queue,
+    surface: wgpu::Surface<'static>,
+    config: wgpu::SurfaceConfiguration,
 }
 
 // ---------------------------------------------------------------------------
-// Application state
+// Egui state
+// ---------------------------------------------------------------------------
+
+struct EguiState {
+    winit_state: egui_winit::State,
+    renderer: egui_wgpu::Renderer,
+}
+
+// ---------------------------------------------------------------------------
+// Application
 // ---------------------------------------------------------------------------
 
 struct App {
     window: Option<Arc<Window>>,
-    device: Option<wgpu::Device>,
-    queue: Option<wgpu::Queue>,
-    surface: Option<wgpu::Surface<'static>>,
-    surface_config: Option<wgpu::SurfaceConfiguration>,
-    surface_format: wgpu::TextureFormat,
-
+    gpu: Option<GpuState>,
+    egui_state: Option<EguiState>,
     egui_ctx: egui::Context,
-    egui_winit: Option<egui_winit::State>,
-    egui_renderer: Option<egui_wgpu::Renderer>,
 
-    ui2d: Option<Ui2dResources>,
-
+    // Scene
     objects: Vec<SceneObject>,
-    selected_index: Option<usize>,
+    selected: usize,
 
+    // Animation
     current_frame: i32,
     start_frame: i32,
     end_frame: i32,
     playing: bool,
-    last_frame_time: Instant,
-    #[allow(dead_code)]
-    auto_keying: bool,
-
     start_time: Instant,
 
-    active_workspace: usize,
-    active_prop_tab: usize,
+    // UI state
+    workspace: usize,
     active_shading: usize,
-    overlays_on: bool,
-    xray_on: bool,
 
+    // Panel collapse states (used by egui CollapsingState default_open)
+    #[allow(dead_code)]
     transform_open: bool,
+    #[allow(dead_code)]
     relations_open: bool,
+    #[allow(dead_code)]
     collections_open: bool,
+    #[allow(dead_code)]
     scene_collection_open: bool,
 }
 
 impl App {
     fn new() -> Self {
         let objects = vec![
-            SceneObject::new("Cube",   "Mesh",   [0.0, 0.0, 0.0],  [0.0, 0.0, 0.0],     [1.0, 1.0, 1.0]),
-            SceneObject::new("Camera", "Camera", [7.36, -6.93, 4.96], [63.6, 0.0, 46.7], [1.0, 1.0, 1.0]),
-            SceneObject::new("Light",  "Light",  [4.08, 1.0, 5.90],  [37.3, 3.16, 107.0], [1.0, 1.0, 1.0]),
+            SceneObject::new("Cube",   "Mesh",   [0.0, 0.0, 0.0],     [0.0, 0.0, 0.0],     [1.0, 1.0, 1.0]),
+            SceneObject::new("Camera", "Camera", [7.36, -6.93, 4.96], [63.6, 0.0, 46.7],   [1.0, 1.0, 1.0]),
+            SceneObject::new("Light",  "Light",  [4.08, 1.0, 5.90],   [37.3, 3.16, 107.0], [1.0, 1.0, 1.0]),
         ];
 
         Self {
             window: None,
-            device: None,
-            queue: None,
-            surface: None,
-            surface_config: None,
-            surface_format: wgpu::TextureFormat::Bgra8UnormSrgb,
-
+            gpu: None,
+            egui_state: None,
             egui_ctx: egui::Context::default(),
-            egui_winit: None,
-            egui_renderer: None,
-
-            ui2d: None,
 
             objects,
-            selected_index: Some(0),
+            selected: 0,
 
             current_frame: 1,
             start_frame: 1,
             end_frame: 250,
             playing: false,
-            last_frame_time: Instant::now(),
-            auto_keying: false,
-
             start_time: Instant::now(),
 
-            active_workspace: 0,
-            active_prop_tab: 3,
+            workspace: 0,
             active_shading: 1,
-            overlays_on: true,
-            xray_on: false,
 
             transform_open: true,
             relations_open: false,
@@ -703,7 +508,7 @@ impl App {
         }
     }
 
-    fn init_wgpu(&mut self, window: Arc<Window>) {
+    fn init_gpu(&mut self, window: Arc<Window>) {
         let size = window.inner_size();
         let instance = wgpu::Instance::new(&wgpu::InstanceDescriptor {
             backends: wgpu::Backends::all(),
@@ -731,8 +536,7 @@ impl App {
         .expect("Failed to create device");
 
         let caps = surface.get_capabilities(&adapter);
-        // Use a NON-sRGB format so our theme color bytes (already in sRGB space) display correctly.
-        // With an sRGB format, the GPU applies gamma encoding on top, making colors too bright.
+        // NON-sRGB format so theme colors display correctly
         let format = caps.formats.iter().find(|f| !f.is_srgb()).copied().unwrap_or(caps.formats[0]);
 
         let config = wgpu::SurfaceConfiguration {
@@ -747,10 +551,9 @@ impl App {
         };
         surface.configure(&device, &config);
 
-        self.surface_format = format;
-
-        let egui_renderer = egui_wgpu::Renderer::new(&device, format, None, 1, true);
-        let egui_winit = egui_winit::State::new(
+        // egui
+        let renderer = egui_wgpu::Renderer::new(&device, format, None, 1, true);
+        let winit_state = egui_winit::State::new(
             self.egui_ctx.clone(),
             egui::ViewportId::ROOT,
             &window,
@@ -759,1083 +562,466 @@ impl App {
             Some(device.limits().max_texture_dimension_2d as usize),
         );
 
+        // Cube resources into callback resources
         let cube_resources = CubeResources::create(&device, format);
-        let ui2d_resources = Ui2dResources::create(&device, format);
+
+        let mut egui_state = EguiState { winit_state, renderer };
+        egui_state.renderer.callback_resources.insert(cube_resources);
 
         self.window = Some(window);
-        self.ui2d = Some(ui2d_resources);
-        self.device = Some(device);
-        self.queue = Some(queue);
-        self.surface = Some(surface);
-        self.surface_config = Some(config);
-        self.egui_winit = Some(egui_winit);
-        self.egui_renderer = Some(egui_renderer);
+        self.gpu = Some(GpuState { device, queue, surface, config });
+        self.egui_state = Some(egui_state);
 
-        self.egui_renderer
-            .as_mut()
-            .unwrap()
-            .callback_resources
-            .insert(cube_resources);
+        setup_blender_theme(&self.egui_ctx);
     }
 
     fn resize(&mut self, width: u32, height: u32) {
-        if let (Some(config), Some(surface), Some(device)) =
-            (&mut self.surface_config, &self.surface, &self.device)
-        {
-            config.width = width.max(1);
-            config.height = height.max(1);
-            surface.configure(device, config);
+        if let Some(gpu) = &mut self.gpu {
+            gpu.config.width = width.max(1);
+            gpu.config.height = height.max(1);
+            gpu.surface.configure(&gpu.device, &gpu.config);
         }
     }
 
     // -----------------------------------------------------------------------
-    // Build the 2D UI DrawList using blender_draw primitives
+    // Full UI layout
     // -----------------------------------------------------------------------
 
-    fn build_ui_draw_list(&self, w: f32, h: f32) -> DrawList {
-        let mut dl = DrawList::new();
-        let _panel_colors = PanelColors::default();
-
-        // Layout regions
-        let vp_right = w - RIGHT_PANEL_W;
-        let ol_split_y = HEADERY + (h - TIMELINE_H - HEADERY) * 0.4;
-
-        // 1. Top bar background
-        dl.add_rect_filled(Rect::new(0.0, 0.0, w, HEADERY), general::HEADER);
-        dl.append(&draw_separator(0.0, w, HEADERY));
-
-        // 2. Viewport header (below top bar, left of right panel)
-        dl.add_rect_filled(Rect::new(0.0, HEADERY, vp_right, HEADERY), view3d::HEADER);
-        dl.append(&draw_separator(0.0, vp_right, HEADERY * 2.0));
-
-        // 3. Top bar menu buttons: File, Edit, Render, Window, Help
-        {
-            let menu_labels = ["File", "Edit", "Render", "Window", "Help"];
-            let mut bx = 28.0; // after logo area
-            for label in &menu_labels {
-                let bw = (label.len() as f32 * 8.0 + 16.0).max(40.0);
-                dl.append(&draw_button(
-                    Rect::new(bx, 2.0, bw, HEADERY - 4.0),
-                    label,
-                    WidgetState::Normal,
-                    &wcol::PULLDOWN,
-                ));
-                bx += bw + 2.0;
-            }
-
-            // Workspace tabs
-            let mut tx = bx + 20.0;
-            for (i, tab) in WORKSPACE_TABS.iter().enumerate() {
-                let tw = tab.len() as f32 * 8.0 + 16.0;
-                let state = if i == self.active_workspace {
-                    WidgetState::Active
-                } else {
-                    WidgetState::Normal
-                };
-                dl.append(&draw_button(
-                    Rect::new(tx, 2.0, tw, HEADERY - 4.0),
-                    tab,
-                    state,
-                    &wcol::TAB,
-                ));
-                tx += tw + 2.0;
-            }
-        }
-
-        // 4. Viewport header buttons
-        {
-            // "Object Mode" button
-            dl.append(&draw_menu_button(
-                Rect::new(4.0, HEADERY + 2.0, 90.0, HEADERY - 4.0),
-                "Object Mode",
-                &wcol::MENU,
-            ));
-
-            // Shading mode buttons (right side of viewport header)
-            let shading_labels = ["Wire", "Solid", "Mat", "Rend"];
-            let mut sx = vp_right - 4.0 * 50.0 - 20.0;
-            for (i, label) in shading_labels.iter().enumerate() {
-                let state = if i == self.active_shading {
-                    WidgetState::Active
-                } else {
-                    WidgetState::Normal
-                };
-                dl.append(&draw_button(
-                    Rect::new(sx, HEADERY + 2.0, 48.0, HEADERY - 4.0),
-                    label,
-                    state,
-                    &wcol::RADIO,
-                ));
-                sx += 50.0;
-            }
-        }
-
-        // -- Viewport grid floor (drawn via DrawList into viewport area) --
-        {
-            let vp_top = HEADERY * 2.0;
-            let vp_bottom = h - TIMELINE_H;
-            let vp_cx = vp_right * 0.5;
-            let vp_cy = (vp_top + vp_bottom) * 0.5;
-            let grid_color: [u8; 4] = [84, 84, 84, 200];
-            let grid_spacing = 50.0;
-
-            // Horizontal grid lines
-            let mut y = vp_cy;
-            while y >= vp_top {
-                dl.add_line(0.0, y, vp_right, y, grid_color);
-                y -= grid_spacing;
-            }
-            y = vp_cy + grid_spacing;
-            while y <= vp_bottom {
-                dl.add_line(0.0, y, vp_right, y, grid_color);
-                y += grid_spacing;
-            }
-
-            // Vertical grid lines
-            let mut x = vp_cx;
-            while x >= 0.0 {
-                dl.add_line(x, vp_top, x, vp_bottom, grid_color);
-                x -= grid_spacing;
-            }
-            x = vp_cx + grid_spacing;
-            while x <= vp_right {
-                dl.add_line(x, vp_top, x, vp_bottom, grid_color);
-                x += grid_spacing;
-            }
-
-            // X axis (red) through center
-            dl.add_line(0.0, vp_cy, vp_right, vp_cy, [180, 50, 50, 160]);
-            // Y axis (green) through center
-            dl.add_line(vp_cx, vp_top, vp_cx, vp_bottom, [50, 180, 50, 160]);
-        }
-
-        // -- Panel separator borders (#242424) --
-        let sep_color: [u8; 4] = [36, 36, 36, 255];
-        // Top bar / viewport border
-        dl.add_line(0.0, HEADERY, w, HEADERY, sep_color);
-        // Viewport header / viewport body border
-        dl.add_line(0.0, HEADERY * 2.0, vp_right, HEADERY * 2.0, sep_color);
-        // Viewport / right panel vertical border
-        dl.add_line(vp_right, HEADERY, vp_right, h - TIMELINE_H, sep_color);
-        // Viewport / timeline border
-        dl.add_line(0.0, h - TIMELINE_H, w, h - TIMELINE_H, sep_color);
-        // Outliner / properties border
-        dl.add_line(vp_right, ol_split_y, w, ol_split_y, sep_color);
-
-        // 5. Outliner background (right panel, top 40%)
-        dl.add_rect_filled(
-            Rect::new(vp_right, HEADERY, RIGHT_PANEL_W, ol_split_y - HEADERY),
-            outliner::BACK,
-        );
-
-        // Outliner header
-        dl.append(&draw_panel_header(
-            Rect::new(vp_right, HEADERY, RIGHT_PANEL_W, HEADERY),
-            "Outliner",
-            false,
-            &PanelColors {
-                header_back: outliner::HEADER,
-                body_back: outliner::BACK,
-                text: general::TITLE,
-                triangle: [200, 200, 200, 255],
-            },
-        ));
-
-        // "Display Mode: View Layer" row
-        dl.add_rect_filled(
-            Rect::new(vp_right, HEADERY * 2.0, RIGHT_PANEL_W, UI_UNIT_Y),
-            [46, 46, 46, 255],
-        );
-
-        // Outliner rows
-        if self.scene_collection_open {
-            let row_start_y = HEADERY * 2.0 + UI_UNIT_Y + UI_UNIT_Y; // after header + mode row + scene collection row
-            // Scene collection row
-            dl.add_rect_filled(
-                Rect::new(vp_right, HEADERY * 2.0 + UI_UNIT_Y, RIGHT_PANEL_W, UI_UNIT_Y),
-                outliner::BACK,
-            );
-
-            for (i, obj) in self.objects.iter().enumerate() {
-                let ry = row_start_y + i as f32 * UI_UNIT_Y;
-                if ry + UI_UNIT_Y > ol_split_y {
-                    break;
-                }
-                let is_selected = self.selected_index == Some(i);
-                let row_color = if is_selected {
-                    outliner::ACTIVE
-                } else if i % 2 == 1 {
-                    outliner::ROW_ALT
-                } else {
-                    outliner::BACK
-                };
-                dl.add_rect_filled(
-                    Rect::new(vp_right, ry, RIGHT_PANEL_W, UI_UNIT_Y),
-                    row_color,
-                );
-                // Selection outline
-                if is_selected {
-                    dl.add_line(
-                        vp_right, ry,
-                        vp_right + RIGHT_PANEL_W, ry,
-                        outliner::SELECTED,
-                    );
-                    dl.add_line(
-                        vp_right, ry + UI_UNIT_Y,
-                        vp_right + RIGHT_PANEL_W, ry + UI_UNIT_Y,
-                        outliner::SELECTED,
-                    );
-                }
-                let _ = obj; // text rendered by egui
-            }
-        }
-
-        // Separator between outliner and properties
-        dl.append(&draw_separator(vp_right, w, ol_split_y));
-
-        // 6. Properties background
-        let props_y = ol_split_y;
-        let props_h = h - TIMELINE_H - props_y;
-        dl.add_rect_filled(
-            Rect::new(vp_right, props_y, RIGHT_PANEL_W, props_h),
-            properties::BACK,
-        );
-
-        // Properties header
-        dl.append(&draw_panel_header(
-            Rect::new(vp_right, props_y, RIGHT_PANEL_W, HEADERY),
-            "Properties",
-            false,
-            &PanelColors {
-                header_back: properties::HEADER,
-                body_back: properties::BACK,
-                text: general::TITLE,
-                triangle: [200, 200, 200, 255],
-            },
-        ));
-
-        // Property tab bar (vertical, 22px wide)
-        let tab_bar_x = vp_right;
-        let tab_bar_y = props_y + HEADERY;
-        for (i, (_icon, _name)) in PROP_TABS.iter().enumerate() {
-            let ty = tab_bar_y + 2.0 + i as f32 * (UI_UNIT_Y + 2.0);
-            let state = if i == self.active_prop_tab {
-                WidgetState::Active
-            } else {
-                WidgetState::Normal
-            };
-            dl.append(&draw_button(
-                Rect::new(tab_bar_x + 2.0, ty, UI_UNIT_X, UI_UNIT_Y),
-                "",
-                state,
-                &wcol::TAB,
-            ));
-        }
-
-        // Vertical separator after tab bar
-        dl.add_line(
-            tab_bar_x + UI_UNIT_X + 4.0, props_y + HEADERY,
-            tab_bar_x + UI_UNIT_X + 4.0, props_y + props_h,
-            general::SEPARATOR,
-        );
-
-        // Property panels (Transform, Relations, Collections)
-        let content_x = tab_bar_x + UI_UNIT_X + 6.0;
-        let content_w = RIGHT_PANEL_W - UI_UNIT_X - 8.0;
-        let mut py = props_y + HEADERY + 4.0;
-
-        // Object name row
-        dl.add_rect_filled(
-            Rect::new(content_x, py, content_w, UI_UNIT_Y + 4.0),
-            properties::PANEL,
-        );
-        py += UI_UNIT_Y + 6.0;
-
-        // Transform panel header
-        let transform_panel_colors = PanelColors {
-            header_back: [55, 55, 55, 255],
-            body_back: properties::PANEL,
-            text: general::TITLE,
-            triangle: [200, 200, 200, 255],
-        };
-        dl.append(&draw_panel_header(
-            Rect::new(content_x, py, content_w, HEADERY),
-            "Transform",
-            !self.transform_open,
-            &transform_panel_colors,
-        ));
-        py += HEADERY;
-
-        if self.transform_open {
-            // Transform body background
-            let transform_body_h = 3.0 * (UI_UNIT_Y + 4.0) + 8.0;
-            dl.append(&draw_panel_background(
-                Rect::new(content_x, py, content_w, transform_body_h),
-                &transform_panel_colors,
-            ));
-
-            // Number fields for Location, Rotation, Scale (3 rows x 3 fields)
-            let field_labels = ["Location", "Rotation", "Scale"];
-            for (row, _label) in field_labels.iter().enumerate() {
-                let fy = py + 4.0 + row as f32 * (UI_UNIT_Y + 4.0);
-                let field_x = content_x + 70.0;
-                let field_w = (content_w - 74.0) / 3.0 - 2.0;
-                for col in 0..3 {
-                    let fx = field_x + col as f32 * (field_w + 2.0);
-                    dl.append(&draw_number_field(
-                        Rect::new(fx, fy, field_w, UI_UNIT_Y),
-                        0.0,
-                        "",
-                        &wcol::NUM,
-                    ));
-                }
-            }
-            py += transform_body_h;
-        }
-
-        // Relations panel header
-        dl.append(&draw_panel_header(
-            Rect::new(content_x, py, content_w, HEADERY),
-            "Relations",
-            !self.relations_open,
-            &transform_panel_colors,
-        ));
-        py += HEADERY;
-
-        if self.relations_open {
-            let body_h = UI_UNIT_Y + 8.0;
-            dl.append(&draw_panel_background(
-                Rect::new(content_x, py, content_w, body_h),
-                &transform_panel_colors,
-            ));
-            py += body_h;
-        }
-
-        // Collections panel header
-        dl.append(&draw_panel_header(
-            Rect::new(content_x, py, content_w, HEADERY),
-            "Collections",
-            !self.collections_open,
-            &transform_panel_colors,
-        ));
-
-        // 7. Timeline background
-        dl.add_rect_filled(
-            Rect::new(0.0, h - TIMELINE_H, w, TIMELINE_H),
-            timeline::BACK,
-        );
-
-        // Timeline header
-        dl.append(&draw_panel_header(
-            Rect::new(0.0, h - TIMELINE_H, w, HEADERY),
-            "Timeline",
-            false,
-            &PanelColors {
-                header_back: timeline::HEADER,
-                body_back: timeline::BACK,
-                text: general::TITLE,
-                triangle: [200, 200, 200, 255],
-            },
-        ));
-
-        // Scrub bar background
-        dl.add_rect_filled(
-            Rect::new(0.0, h - TIMELINE_H + HEADERY, w, UI_UNIT_Y),
-            timeline::SCRUB_BACK,
-        );
-
-        // Frame ruler tick marks
-        {
-            let scrub_y = h - TIMELINE_H + HEADERY;
-            let total = (self.end_frame - self.start_frame).max(1) as f32;
-            let tick_color: [u8; 4] = [120, 120, 120, 255];
-            let minor_tick_color: [u8; 4] = [80, 80, 80, 255];
-            for f in self.start_frame..=self.end_frame {
-                let frac = (f - self.start_frame) as f32 / total;
-                let x = frac * w;
-                if f % 50 == 0 {
-                    // Major tick
-                    dl.add_line(x, scrub_y, x, scrub_y + UI_UNIT_Y, tick_color);
-                } else if f % 10 == 0 {
-                    // Minor tick
-                    dl.add_line(x, scrub_y + UI_UNIT_Y * 0.5, x, scrub_y + UI_UNIT_Y, minor_tick_color);
-                }
-            }
-        }
-
-        // Current frame indicator line
-        {
-            let total = (self.end_frame - self.start_frame).max(1) as f32;
-            let frac = (self.current_frame - self.start_frame) as f32 / total;
-            let x = frac * w;
-            let scrub_y = h - TIMELINE_H + HEADERY;
-            dl.add_line(x, scrub_y, x, scrub_y + UI_UNIT_Y, timeline::FRAME_CURRENT);
-        }
-
-        // Transport buttons row
-        {
-            let transport_y = h - TIMELINE_H + HEADERY + UI_UNIT_Y + 4.0;
-            let btn_labels = ["|<<", "<", ">", ">>", ">>|"];
-            let mut bx = 4.0;
-            for label in &btn_labels {
-                dl.append(&draw_button(
-                    Rect::new(bx, transport_y, 28.0, UI_UNIT_Y),
-                    label,
-                    WidgetState::Normal,
-                    &wcol::REGULAR,
-                ));
-                bx += 30.0;
-            }
-
-            // Frame number field
-            dl.append(&draw_number_field(
-                Rect::new(bx + 40.0, transport_y, 60.0, UI_UNIT_Y),
-                self.current_frame as f32,
-                "Frame",
-                &wcol::NUM,
-            ));
-
-            // Start/End fields
-            dl.append(&draw_number_field(
-                Rect::new(bx + 140.0, transport_y, 50.0, UI_UNIT_Y),
-                self.start_frame as f32,
-                "Start",
-                &wcol::NUM,
-            ));
-            dl.append(&draw_number_field(
-                Rect::new(bx + 220.0, transport_y, 50.0, UI_UNIT_Y),
-                self.end_frame as f32,
-                "End",
-                &wcol::NUM,
-            ));
-        }
-
-        // Separator between viewport and timeline
-        dl.append(&draw_separator(0.0, w, h - TIMELINE_H));
-
-        dl
+    fn draw_ui(&mut self, ctx: &egui::Context) {
+        self.draw_top_bar(ctx);
+        self.draw_timeline(ctx);
+        self.draw_right_panel(ctx);
+        self.draw_viewport(ctx);
     }
 
-    // -----------------------------------------------------------------------
-    // Build egui text-only overlay (no backgrounds)
-    // -----------------------------------------------------------------------
+    // -- Top bar --
+    fn draw_top_bar(&mut self, ctx: &egui::Context) {
+        egui::TopBottomPanel::top("topbar")
+            .exact_height(26.0)
+            .frame(Frame::NONE.fill(Color32::from_rgb(42, 42, 42)))
+            .show(ctx, |ui| {
+                ui.horizontal_centered(|ui| {
+                    ui.spacing_mut().item_spacing.x = 2.0;
 
-    fn draw_egui_text_overlay(&mut self, ctx: &egui::Context, w: f32, h: f32) {
-        // Make egui fully transparent — text only
-        let mut visuals = egui::Visuals::dark();
-        visuals.window_fill = egui::Color32::TRANSPARENT;
-        visuals.panel_fill = egui::Color32::TRANSPARENT;
-        visuals.override_text_color = Some(egui::Color32::from_rgb(230, 230, 230));
-        visuals.widgets.noninteractive.bg_fill = egui::Color32::TRANSPARENT;
-        visuals.widgets.noninteractive.weak_bg_fill = egui::Color32::TRANSPARENT;
-        visuals.widgets.noninteractive.bg_stroke = egui::Stroke::NONE;
-        visuals.widgets.inactive.bg_fill = egui::Color32::TRANSPARENT;
-        visuals.widgets.inactive.weak_bg_fill = egui::Color32::TRANSPARENT;
-        visuals.widgets.inactive.bg_stroke = egui::Stroke::NONE;
-        visuals.widgets.hovered.bg_fill = egui::Color32::TRANSPARENT;
-        visuals.widgets.hovered.weak_bg_fill = egui::Color32::TRANSPARENT;
-        visuals.widgets.active.bg_fill = egui::Color32::TRANSPARENT;
-        visuals.widgets.active.weak_bg_fill = egui::Color32::TRANSPARENT;
-        visuals.window_shadow = egui::Shadow::NONE;
-        visuals.window_stroke = egui::Stroke::NONE;
-        ctx.set_visuals(visuals);
-
-        let mut style = (*ctx.style()).clone();
-        style.spacing.item_spacing = egui::vec2(4.0, 2.0);
-        style.spacing.button_padding = egui::vec2(4.0, 1.0);
-        ctx.set_style(style);
-
-        let vp_right = w - RIGHT_PANEL_W;
-        let ol_split_y = HEADERY + (h - TIMELINE_H - HEADERY) * 0.4;
-
-        let text_color = egui::Color32::from_rgb(230, 230, 230);
-        let title_color = egui::Color32::from_rgb(238, 238, 238);
-        let dim_color = egui::Color32::from_rgb(200, 200, 200);
-
-        // Use egui::Area for text labels at exact pixel positions
-        let painter = ctx.layer_painter(egui::LayerId::new(
-            egui::Order::Foreground,
-            egui::Id::new("ui_text"),
-        ));
-
-        // -- Top bar menu labels --
-        let menu_labels = ["File", "Edit", "Render", "Window", "Help"];
-        let mut bx = 34.0;
-        for label in &menu_labels {
-            let bw = (label.len() as f32 * 8.0 + 16.0).max(40.0);
-            painter.text(
-                egui::pos2(bx + bw * 0.5, HEADERY * 0.5),
-                egui::Align2::CENTER_CENTER,
-                *label,
-                egui::FontId::proportional(13.0),
-                text_color,
-            );
-            bx += bw + 2.0;
-        }
-
-        // Logo icon
-        painter.text(
-            egui::pos2(14.0, HEADERY * 0.5),
-            egui::Align2::CENTER_CENTER,
-            "\u{2B22}",
-            egui::FontId::proportional(14.0),
-            egui::Color32::from_rgb(255, 160, 40),
-        );
-
-        // -- Workspace tab labels --
-        let mut tx = bx + 20.0;
-        for (i, tab) in WORKSPACE_TABS.iter().enumerate() {
-            let tw = tab.len() as f32 * 8.0 + 16.0;
-            let color = if i == self.active_workspace { egui::Color32::WHITE } else { text_color };
-            painter.text(
-                egui::pos2(tx + tw * 0.5, HEADERY * 0.5),
-                egui::Align2::CENTER_CENTER,
-                *tab,
-                egui::FontId::proportional(13.0),
-                color,
-            );
-            tx += tw + 2.0;
-        }
-
-        // Right side: Scene / ViewLayer
-        painter.text(
-            egui::pos2(w - 80.0, HEADERY * 0.5),
-            egui::Align2::RIGHT_CENTER,
-            "Scene  |  ViewLayer",
-            egui::FontId::proportional(13.0),
-            text_color,
-        );
-
-        // -- Viewport header text --
-        painter.text(
-            egui::pos2(50.0, HEADERY + HEADERY * 0.5),
-            egui::Align2::CENTER_CENTER,
-            "Object Mode",
-            egui::FontId::proportional(13.0),
-            text_color,
-        );
-
-        painter.text(
-            egui::pos2(130.0, HEADERY + HEADERY * 0.5),
-            egui::Align2::CENTER_CENTER,
-            "Global",
-            egui::FontId::proportional(13.0),
-            text_color,
-        );
-
-        painter.text(
-            egui::pos2(210.0, HEADERY + HEADERY * 0.5),
-            egui::Align2::CENTER_CENTER,
-            "Median Point",
-            egui::FontId::proportional(13.0),
-            text_color,
-        );
-
-        // Shading labels
-        let shading_labels = ["Wire", "Solid", "Mat", "Rend"];
-        let mut sx = vp_right - 4.0 * 50.0 - 20.0;
-        for (i, label) in shading_labels.iter().enumerate() {
-            let color = if i == self.active_shading { egui::Color32::WHITE } else { text_color };
-            painter.text(
-                egui::pos2(sx + 24.0, HEADERY + HEADERY * 0.5),
-                egui::Align2::CENTER_CENTER,
-                *label,
-                egui::FontId::proportional(13.0),
-                color,
-            );
-            sx += 50.0;
-        }
-
-        // Overlays / X-Ray text
-        painter.text(
-            egui::pos2(vp_right - 90.0, HEADERY + HEADERY * 0.5),
-            egui::Align2::CENTER_CENTER,
-            "Overlays",
-            egui::FontId::proportional(13.0),
-            if self.overlays_on { egui::Color32::WHITE } else { text_color },
-        );
-        painter.text(
-            egui::pos2(vp_right - 30.0, HEADERY + HEADERY * 0.5),
-            egui::Align2::CENTER_CENTER,
-            "X-Ray",
-            egui::FontId::proportional(13.0),
-            if self.xray_on { egui::Color32::from_rgb(255, 160, 40) } else { text_color },
-        );
-
-        // -- Outliner text --
-        painter.text(
-            egui::pos2(vp_right + 28.0, HEADERY + HEADERY * 0.5),
-            egui::Align2::LEFT_CENTER,
-            "Outliner",
-            egui::FontId::proportional(13.0),
-            title_color,
-        );
-
-        // Display Mode text
-        painter.text(
-            egui::pos2(vp_right + 8.0, HEADERY * 2.0 + UI_UNIT_Y * 0.5),
-            egui::Align2::LEFT_CENTER,
-            "Display Mode: View Layer",
-            egui::FontId::proportional(13.0),
-            text_color,
-        );
-
-        // Scene Collection label
-        painter.text(
-            egui::pos2(vp_right + 40.0, HEADERY * 2.0 + UI_UNIT_Y + UI_UNIT_Y * 0.5),
-            egui::Align2::LEFT_CENTER,
-            "\u{25BC} \u{1F4C1} Scene Collection",
-            egui::FontId::proportional(13.0),
-            text_color,
-        );
-
-        // Object rows
-        if self.scene_collection_open {
-            let row_start_y = HEADERY * 2.0 + UI_UNIT_Y + UI_UNIT_Y;
-            for (i, obj) in self.objects.iter().enumerate() {
-                let ry = row_start_y + i as f32 * UI_UNIT_Y;
-                if ry + UI_UNIT_Y > ol_split_y {
-                    break;
-                }
-                let is_selected = self.selected_index == Some(i);
-                let icon = match obj.obj_type {
-                    "Mesh"   => "\u{25B3}",
-                    "Camera" => "\u{1F3A5}",
-                    "Light"  => "\u{2299}",
-                    _        => "\u{25CB}",
-                };
-                let icon_color = match obj.obj_type {
-                    "Mesh"   => egui::Color32::from_rgb(76, 175, 80),
-                    "Camera" => egui::Color32::from_rgb(66, 165, 245),
-                    "Light"  => egui::Color32::from_rgb(255, 202, 40),
-                    _        => text_color,
-                };
-
-                let text_x = vp_right + OL_INDENT;
-                painter.text(
-                    egui::pos2(text_x, ry + UI_UNIT_Y * 0.5),
-                    egui::Align2::LEFT_CENTER,
-                    icon,
-                    egui::FontId::proportional(ICON_DEFAULT - 4.0),
-                    icon_color,
-                );
-                painter.text(
-                    egui::pos2(text_x + ICON_DEFAULT + 2.0, ry + UI_UNIT_Y * 0.5),
-                    egui::Align2::LEFT_CENTER,
-                    &obj.name,
-                    egui::FontId::proportional(13.0),
-                    if is_selected { egui::Color32::WHITE } else { text_color },
-                );
-
-                // Visibility icons
-                let eye = if obj.visible { "\u{1F441}" } else { "\u{2014}" };
-                painter.text(
-                    egui::pos2(w - 52.0, ry + UI_UNIT_Y * 0.5),
-                    egui::Align2::CENTER_CENTER,
-                    eye,
-                    egui::FontId::proportional(13.0),
-                    dim_color,
-                );
-                let cam = if obj.renderable { "\u{1F4F7}" } else { "\u{2014}" };
-                painter.text(
-                    egui::pos2(w - 32.0, ry + UI_UNIT_Y * 0.5),
-                    egui::Align2::CENTER_CENTER,
-                    cam,
-                    egui::FontId::proportional(13.0),
-                    dim_color,
-                );
-                let sel = if obj.selectable { "\u{2AFD}" } else { "\u{2014}" };
-                painter.text(
-                    egui::pos2(w - 12.0, ry + UI_UNIT_Y * 0.5),
-                    egui::Align2::CENTER_CENTER,
-                    sel,
-                    egui::FontId::proportional(13.0),
-                    dim_color,
-                );
-            }
-        }
-
-        // -- Properties text --
-        let props_y = ol_split_y;
-        painter.text(
-            egui::pos2(vp_right + 28.0, props_y + HEADERY * 0.5),
-            egui::Align2::LEFT_CENTER,
-            "Properties",
-            egui::FontId::proportional(13.0),
-            title_color,
-        );
-
-        // Property tab icons
-        let tab_bar_y = props_y + HEADERY;
-        for (i, (icon, _name)) in PROP_TABS.iter().enumerate() {
-            let ty = tab_bar_y + 2.0 + i as f32 * (UI_UNIT_Y + 2.0);
-            let color = if i == self.active_prop_tab { egui::Color32::WHITE } else { text_color };
-            painter.text(
-                egui::pos2(vp_right + 2.0 + UI_UNIT_X * 0.5, ty + UI_UNIT_Y * 0.5),
-                egui::Align2::CENTER_CENTER,
-                *icon,
-                egui::FontId::proportional(13.0),
-                color,
-            );
-        }
-
-        // Property content text
-        let content_x = vp_right + UI_UNIT_X + 6.0;
-        let content_w = RIGHT_PANEL_W - UI_UNIT_X - 8.0;
-        let mut py = props_y + HEADERY + 4.0;
-
-        if let Some(idx) = self.selected_index {
-            let obj = &self.objects[idx];
-            let type_icon = match obj.obj_type {
-                "Mesh"   => "\u{25B3}",
-                "Camera" => "\u{1F3A5}",
-                "Light"  => "\u{2299}",
-                _        => "\u{25CB}",
-            };
-            painter.text(
-                egui::pos2(content_x + 4.0, py + (UI_UNIT_Y + 4.0) * 0.5),
-                egui::Align2::LEFT_CENTER,
-                &format!("{} {}", type_icon, obj.name),
-                egui::FontId::proportional(13.0),
-                egui::Color32::from_rgb(237, 87, 0),
-            );
-        }
-        py += UI_UNIT_Y + 6.0;
-
-        // Transform header text
-        let tri = if self.transform_open { "\u{25BC}" } else { "\u{25B6}" };
-        painter.text(
-            egui::pos2(content_x + 22.0, py + HEADERY * 0.5),
-            egui::Align2::LEFT_CENTER,
-            &format!("{} Transform", tri),
-            egui::FontId::proportional(13.0),
-            title_color,
-        );
-        py += HEADERY;
-
-        if self.transform_open {
-            if let Some(idx) = self.selected_index {
-                let obj = &self.objects[idx];
-                let field_labels = [
-                    ("Location", obj.location),
-                    ("Rotation", obj.rotation),
-                    ("Scale",    obj.scale),
-                ];
-                let axis_colors = [
-                    egui::Color32::from_rgb(214, 67, 67),
-                    egui::Color32::from_rgb(104, 188, 80),
-                    egui::Color32::from_rgb(67, 133, 214),
-                ];
-                let axis_names = ["X", "Y", "Z"];
-
-                for (row, (label, vals)) in field_labels.iter().enumerate() {
-                    let fy = py + 4.0 + row as f32 * (UI_UNIT_Y + 4.0);
-                    painter.text(
-                        egui::pos2(content_x + 4.0, fy + UI_UNIT_Y * 0.5),
-                        egui::Align2::LEFT_CENTER,
-                        *label,
-                        egui::FontId::proportional(13.0),
-                        text_color,
+                    // Logo
+                    ui.label(
+                        egui::RichText::new("Forge3D")
+                            .strong()
+                            .color(Color32::from_rgb(200, 200, 200))
+                            .size(13.0),
                     );
 
-                    let field_x = content_x + 70.0;
-                    let field_w = (content_w - 74.0) / 3.0 - 2.0;
-                    for col in 0..3 {
-                        let fx = field_x + col as f32 * (field_w + 2.0);
-                        painter.text(
-                            egui::pos2(fx + 10.0, fy + UI_UNIT_Y * 0.5),
-                            egui::Align2::LEFT_CENTER,
-                            axis_names[col],
-                            egui::FontId::proportional(11.0),
-                            axis_colors[col],
-                        );
-                        let val_str = if *label == "Rotation" {
-                            format!("{:.1}\u{00B0}", vals[col])
-                        } else {
-                            format!("{:.3}", vals[col])
-                        };
-                        painter.text(
-                            egui::pos2(fx + field_w * 0.5 + 4.0, fy + UI_UNIT_Y * 0.5),
-                            egui::Align2::CENTER_CENTER,
-                            val_str,
-                            egui::FontId::proportional(13.0),
-                            text_color,
-                        );
+                    ui.separator();
+
+                    // Menus
+                    ui.menu_button("File", |ui| {
+                        if ui.button("New").clicked() { ui.close_menu(); }
+                        if ui.button("Open...").clicked() { ui.close_menu(); }
+                        if ui.button("Save").clicked() { ui.close_menu(); }
+                        if ui.button("Save As...").clicked() { ui.close_menu(); }
+                        ui.separator();
+                        if ui.button("Quit").clicked() { ui.close_menu(); }
+                    });
+                    ui.menu_button("Edit", |ui| {
+                        if ui.button("Undo").clicked() { ui.close_menu(); }
+                        if ui.button("Redo").clicked() { ui.close_menu(); }
+                        ui.separator();
+                        if ui.button("Preferences...").clicked() { ui.close_menu(); }
+                    });
+                    ui.menu_button("Render", |ui| {
+                        if ui.button("Render Image").clicked() { ui.close_menu(); }
+                        if ui.button("Render Animation").clicked() { ui.close_menu(); }
+                    });
+                    ui.menu_button("Window", |ui| {
+                        if ui.button("New Window").clicked() { ui.close_menu(); }
+                        if ui.button("Toggle Fullscreen").clicked() { ui.close_menu(); }
+                    });
+                    ui.menu_button("Help", |ui| {
+                        if ui.button("About Forge3D").clicked() { ui.close_menu(); }
+                    });
+
+                    ui.separator();
+
+                    // Workspace tabs
+                    for (i, name) in WORKSPACE_TABS.iter().enumerate() {
+                        if ui.selectable_label(self.workspace == i, *name).clicked() {
+                            self.workspace = i;
+                        }
                     }
+
+                    ui.separator();
+
+                    // Scene / ViewLayer labels
+                    ui.label(
+                        egui::RichText::new("Scene")
+                            .color(Color32::from_rgb(180, 180, 180))
+                            .size(11.0),
+                    );
+                    ui.label(
+                        egui::RichText::new("ViewLayer")
+                            .color(Color32::from_rgb(180, 180, 180))
+                            .size(11.0),
+                    );
+                });
+            });
+    }
+
+    // -- Timeline --
+    fn draw_timeline(&mut self, ctx: &egui::Context) {
+        egui::TopBottomPanel::bottom("timeline")
+            .exact_height(80.0)
+            .frame(Frame::NONE.fill(Color32::from_rgb(42, 42, 42)))
+            .show(ctx, |ui| {
+                ui.horizontal(|ui| {
+                    ui.spacing_mut().item_spacing.x = 2.0;
+
+                    // Transport buttons
+                    if ui.button("\u{23EE}").clicked() {
+                        self.current_frame = self.start_frame;
+                    }
+                    if ui.button("\u{23EA}").clicked() {
+                        self.current_frame = (self.current_frame - 1).max(self.start_frame);
+                    }
+                    let play_label = if self.playing { "\u{23F8}" } else { "\u{25B6}" };
+                    if ui.button(play_label).clicked() {
+                        self.playing = !self.playing;
+                        if self.playing {
+                            self.start_time = Instant::now();
+                        }
+                    }
+                    if ui.button("\u{23E9}").clicked() {
+                        self.current_frame = (self.current_frame + 1).min(self.end_frame);
+                    }
+                    if ui.button("\u{23ED}").clicked() {
+                        self.current_frame = self.end_frame;
+                    }
+
+                    ui.separator();
+
+                    ui.label("Frame:");
+                    ui.add(egui::DragValue::new(&mut self.current_frame)
+                        .range(self.start_frame..=self.end_frame)
+                        .speed(0.5));
+
+                    ui.separator();
+
+                    ui.label("Start:");
+                    ui.add(egui::DragValue::new(&mut self.start_frame).speed(1.0));
+                    ui.label("End:");
+                    ui.add(egui::DragValue::new(&mut self.end_frame).speed(1.0));
+                });
+
+                // Timeline scrub slider
+                ui.add_space(4.0);
+                let mut frame_f = self.current_frame as f32;
+                let slider = egui::Slider::new(
+                    &mut frame_f,
+                    self.start_frame as f32..=self.end_frame as f32,
+                )
+                .show_value(false);
+                if ui.add(slider).changed() {
+                    self.current_frame = frame_f as i32;
                 }
-                py += 3.0 * (UI_UNIT_Y + 4.0) + 8.0;
-            }
-        }
 
-        // Relations header text
-        let tri = if self.relations_open { "\u{25BC}" } else { "\u{25B6}" };
-        painter.text(
-            egui::pos2(content_x + 22.0, py + HEADERY * 0.5),
-            egui::Align2::LEFT_CENTER,
-            &format!("{} Relations", tri),
-            egui::FontId::proportional(13.0),
-            title_color,
-        );
-        py += HEADERY;
+                // Frame ruler marks
+                ui.horizontal(|ui| {
+                    let available = ui.available_width();
+                    let range = (self.end_frame - self.start_frame).max(1) as f32;
+                    let step = (range / 10.0).max(1.0) as i32;
+                    for i in 0..=10 {
+                        let f = self.start_frame + i * step;
+                        let x_frac = (f - self.start_frame) as f32 / range;
+                        let _ = available; // use for layout reference
+                        ui.label(
+                            egui::RichText::new(format!("{f}"))
+                                .color(Color32::from_rgb(140, 140, 140))
+                                .size(9.0),
+                        );
+                        if x_frac < 0.95 {
+                            ui.add_space(available / 12.0 - 20.0);
+                        }
+                    }
+                });
+            });
+    }
 
-        if self.relations_open {
-            painter.text(
-                egui::pos2(content_x + 12.0, py + (UI_UNIT_Y + 8.0) * 0.5),
-                egui::Align2::LEFT_CENTER,
-                "Parent: None",
-                egui::FontId::proportional(13.0),
-                text_color,
+    // -- Right panel: outliner + properties --
+    fn draw_right_panel(&mut self, ctx: &egui::Context) {
+        egui::SidePanel::right("right")
+            .exact_width(300.0)
+            .frame(Frame::NONE.fill(Color32::from_rgb(40, 40, 40)))
+            .show(ctx, |ui| {
+                // Outliner section
+                ui.label(
+                    egui::RichText::new("Outliner")
+                        .color(Color32::from_rgb(180, 180, 180))
+                        .size(11.0),
+                );
+                ui.separator();
+
+                egui::CollapsingHeader::new(
+                        egui::RichText::new("Scene Collection")
+                            .color(Color32::from_rgb(200, 200, 200)),
+                    )
+                    .default_open(true)
+                    .show(ui, |ui| {
+                        let mut new_selected = self.selected;
+                        for (i, obj) in self.objects.iter().enumerate() {
+                            ui.horizontal(|ui| {
+                                let label_text = format!("{} {}", obj.icon(), obj.name);
+                                let response = ui.selectable_label(
+                                    self.selected == i,
+                                    egui::RichText::new(&label_text)
+                                        .color(if self.selected == i {
+                                            Color32::WHITE
+                                        } else {
+                                            Color32::from_rgb(200, 200, 200)
+                                        }),
+                                );
+                                if response.clicked() {
+                                    new_selected = i;
+                                }
+
+                                // Visibility / render toggles on the right
+                                ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                                    let vis_label = if obj.visible { "\u{1F441}" } else { "\u{1F441}\u{200D}\u{1F5E8}" };
+                                    ui.label(
+                                        egui::RichText::new(vis_label)
+                                            .color(Color32::from_rgb(160, 160, 160))
+                                            .size(11.0),
+                                    );
+                                    let cam_label = if obj.renderable { "\u{1F4F7}" } else { " " };
+                                    ui.label(
+                                        egui::RichText::new(cam_label)
+                                            .color(Color32::from_rgb(160, 160, 160))
+                                            .size(11.0),
+                                    );
+                                });
+                            });
+                        }
+                        self.selected = new_selected;
+                    });
+
+                ui.add_space(10.0);
+                ui.separator();
+
+                // Properties section
+                ui.label(
+                    egui::RichText::new("Properties")
+                        .color(Color32::from_rgb(180, 180, 180))
+                        .size(11.0),
+                );
+                ui.separator();
+
+                if let Some(obj) = self.objects.get_mut(self.selected) {
+                    // Transform
+                    let transform_id = ui.make_persistent_id("transform_section");
+                    egui::collapsing_header::CollapsingState::load_with_default_open(ui.ctx(), transform_id, true)
+                        .show_header(ui, |ui| {
+                            ui.label(
+                                egui::RichText::new("Transform")
+                                    .color(Color32::from_rgb(200, 200, 200)),
+                            );
+                        })
+                        .body(|ui| {
+                            Self::draw_xyz_row(ui, "Location", &mut obj.location, 0.01);
+                            Self::draw_xyz_row(ui, "Rotation", &mut obj.rotation, 0.5);
+                            Self::draw_xyz_row(ui, "Scale", &mut obj.scale, 0.01);
+                        });
+
+                    // Relations
+                    let relations_id = ui.make_persistent_id("relations_section");
+                    egui::collapsing_header::CollapsingState::load_with_default_open(ui.ctx(), relations_id, false)
+                        .show_header(ui, |ui| {
+                            ui.label(
+                                egui::RichText::new("Relations")
+                                    .color(Color32::from_rgb(200, 200, 200)),
+                            );
+                        })
+                        .body(|ui| {
+                            ui.label("Parent: None");
+                        });
+
+                    // Collections
+                    let collections_id = ui.make_persistent_id("collections_section");
+                    egui::collapsing_header::CollapsingState::load_with_default_open(ui.ctx(), collections_id, false)
+                        .show_header(ui, |ui| {
+                            ui.label(
+                                egui::RichText::new("Collections")
+                                    .color(Color32::from_rgb(200, 200, 200)),
+                            );
+                        })
+                        .body(|ui| {
+                            ui.label("Scene Collection");
+                        });
+                }
+            });
+    }
+
+    fn draw_xyz_row(ui: &mut egui::Ui, label: &str, values: &mut [f32; 3], speed: f32) {
+        ui.horizontal(|ui| {
+            ui.label(
+                egui::RichText::new(label)
+                    .color(Color32::from_rgb(180, 180, 180))
+                    .size(11.0),
             );
-            py += UI_UNIT_Y + 8.0;
-        }
+            ui.colored_label(Color32::from_rgb(220, 70, 70), "X");
+            ui.add(egui::DragValue::new(&mut values[0]).speed(speed).max_decimals(3));
+            ui.colored_label(Color32::from_rgb(70, 200, 70), "Y");
+            ui.add(egui::DragValue::new(&mut values[1]).speed(speed).max_decimals(3));
+            ui.colored_label(Color32::from_rgb(70, 120, 220), "Z");
+            ui.add(egui::DragValue::new(&mut values[2]).speed(speed).max_decimals(3));
+        });
+    }
 
-        // Collections header text
-        let tri = if self.collections_open { "\u{25BC}" } else { "\u{25B6}" };
-        painter.text(
-            egui::pos2(content_x + 22.0, py + HEADERY * 0.5),
-            egui::Align2::LEFT_CENTER,
-            &format!("{} Collections", tri),
-            egui::FontId::proportional(13.0),
-            title_color,
-        );
+    // -- 3D Viewport --
+    fn draw_viewport(&mut self, ctx: &egui::Context) {
+        egui::CentralPanel::default()
+            .frame(Frame::NONE.fill(Color32::from_rgb(51, 51, 51)))
+            .show(ctx, |ui| {
+                // Viewport header
+                ui.horizontal(|ui| {
+                    ui.spacing_mut().item_spacing.x = 2.0;
+                    ui.label(
+                        egui::RichText::new("Object Mode")
+                            .color(Color32::from_rgb(200, 200, 200))
+                            .size(11.0),
+                    );
+                    ui.separator();
 
-        // -- Timeline text --
-        let tl_y = h - TIMELINE_H;
-        painter.text(
-            egui::pos2(28.0, tl_y + HEADERY * 0.5),
-            egui::Align2::LEFT_CENTER,
-            "Timeline",
-            egui::FontId::proportional(13.0),
-            title_color,
-        );
+                    let shading_labels = ["Wire", "Solid", "Material", "Rendered"];
+                    for (i, label) in shading_labels.iter().enumerate() {
+                        if ui.selectable_label(self.active_shading == i, *label).clicked() {
+                            self.active_shading = i;
+                        }
+                    }
+                });
+                ui.separator();
 
-        painter.text(
-            egui::pos2(w - 80.0, tl_y + HEADERY * 0.5),
-            egui::Align2::RIGHT_CENTER,
-            "Playback  Keying  View",
-            egui::FontId::proportional(13.0),
-            text_color,
-        );
+                // 3D cube render via callback
+                let rect = ui.available_rect_before_wrap();
+                let aspect = if rect.height() > 0.0 { rect.width() / rect.height() } else { 1.0 };
 
-        // Scrub ruler tick labels
-        {
-            let scrub_y = tl_y + HEADERY;
-            let total = (self.end_frame - self.start_frame).max(1) as f32;
-            for f in (self.start_frame..=self.end_frame).step_by(50) {
-                let frac = (f - self.start_frame) as f32 / total;
-                let x = frac * w;
+                let t = self.start_time.elapsed().as_secs_f32();
+                let model = mat4_mul(&mat4_rotate_y(t * 0.7), &mat4_rotate_x(0.4));
+                let view = mat4_translate(0.0, 0.0, -3.0);
+                let proj = mat4_perspective(std::f32::consts::FRAC_PI_4, aspect, 0.1, 100.0);
+                let mvp = mat4_mul(&proj, &mat4_mul(&view, &model));
+
+                let cb = egui_wgpu::Callback::new_paint_callback(
+                    rect,
+                    CubeCallback { mvp },
+                );
+                ui.painter().add(cb);
+
+                // Grid overlay
+                let painter = ui.painter();
+                let grid_color = Color32::from_rgba_premultiplied(70, 70, 70, 60);
+                let center = rect.center();
+                let grid_spacing = 50.0;
+
+                // Horizontal lines
+                let mut y = center.y;
+                while y >= rect.top() {
+                    painter.line_segment(
+                        [egui::pos2(rect.left(), y), egui::pos2(rect.right(), y)],
+                        Stroke::new(0.5, grid_color),
+                    );
+                    y -= grid_spacing;
+                }
+                y = center.y + grid_spacing;
+                while y <= rect.bottom() {
+                    painter.line_segment(
+                        [egui::pos2(rect.left(), y), egui::pos2(rect.right(), y)],
+                        Stroke::new(0.5, grid_color),
+                    );
+                    y += grid_spacing;
+                }
+
+                // Vertical lines
+                let mut x = center.x;
+                while x >= rect.left() {
+                    painter.line_segment(
+                        [egui::pos2(x, rect.top()), egui::pos2(x, rect.bottom())],
+                        Stroke::new(0.5, grid_color),
+                    );
+                    x -= grid_spacing;
+                }
+                x = center.x + grid_spacing;
+                while x <= rect.right() {
+                    painter.line_segment(
+                        [egui::pos2(x, rect.top()), egui::pos2(x, rect.bottom())],
+                        Stroke::new(0.5, grid_color),
+                    );
+                    x += grid_spacing;
+                }
+
+                // Axis lines (X = red, Y = green)
+                painter.line_segment(
+                    [egui::pos2(rect.left(), center.y), egui::pos2(rect.right(), center.y)],
+                    Stroke::new(1.0, Color32::from_rgba_premultiplied(150, 50, 50, 100)),
+                );
+                painter.line_segment(
+                    [egui::pos2(center.x, rect.top()), egui::pos2(center.x, rect.bottom())],
+                    Stroke::new(1.0, Color32::from_rgba_premultiplied(50, 150, 50, 100)),
+                );
+
+                // XYZ gizmo in bottom-left
+                let gizmo_origin = egui::pos2(rect.left() + 40.0, rect.bottom() - 40.0);
+                let gizmo_len = 30.0;
+                painter.line_segment(
+                    [gizmo_origin, egui::pos2(gizmo_origin.x + gizmo_len, gizmo_origin.y)],
+                    Stroke::new(2.0, Color32::from_rgb(200, 60, 60)),
+                );
                 painter.text(
-                    egui::pos2(x, scrub_y + 2.0),
-                    egui::Align2::CENTER_TOP,
-                    format!("{f}"),
+                    egui::pos2(gizmo_origin.x + gizmo_len + 4.0, gizmo_origin.y),
+                    egui::Align2::LEFT_CENTER,
+                    "X",
+                    egui::FontId::proportional(10.0),
+                    Color32::from_rgb(200, 60, 60),
+                );
+                painter.line_segment(
+                    [gizmo_origin, egui::pos2(gizmo_origin.x, gizmo_origin.y - gizmo_len)],
+                    Stroke::new(2.0, Color32::from_rgb(60, 200, 60)),
+                );
+                painter.text(
+                    egui::pos2(gizmo_origin.x, gizmo_origin.y - gizmo_len - 10.0),
+                    egui::Align2::CENTER_BOTTOM,
+                    "Y",
+                    egui::FontId::proportional(10.0),
+                    Color32::from_rgb(60, 200, 60),
+                );
+                // Z goes diagonally
+                painter.line_segment(
+                    [gizmo_origin, egui::pos2(gizmo_origin.x - gizmo_len * 0.5, gizmo_origin.y - gizmo_len * 0.5)],
+                    Stroke::new(2.0, Color32::from_rgb(60, 100, 200)),
+                );
+                painter.text(
+                    egui::pos2(gizmo_origin.x - gizmo_len * 0.5 - 10.0, gizmo_origin.y - gizmo_len * 0.5),
+                    egui::Align2::RIGHT_CENTER,
+                    "Z",
+                    egui::FontId::proportional(10.0),
+                    Color32::from_rgb(60, 100, 200),
+                );
+
+                // "Object Mode" overlay top-left
+                painter.text(
+                    egui::pos2(rect.left() + 8.0, rect.top() + 8.0),
+                    egui::Align2::LEFT_TOP,
+                    "Object Mode",
+                    egui::FontId::proportional(12.0),
+                    Color32::from_rgb(200, 200, 200),
+                );
+
+                // Stats overlay bottom-right
+                painter.text(
+                    egui::pos2(rect.right() - 8.0, rect.bottom() - 8.0),
+                    egui::Align2::RIGHT_BOTTOM,
+                    "Verts: 8  Faces: 6",
                     egui::FontId::proportional(11.0),
-                    text_color,
+                    Color32::from_rgb(160, 160, 160),
                 );
-            }
-        }
-
-        // Transport button labels
-        {
-            let transport_y = tl_y + HEADERY + UI_UNIT_Y + 4.0;
-            let btn_labels = ["\u{23EE}", "\u{25C0}", if self.playing { "\u{23F8}" } else { "\u{25B6}" }, "\u{25B6}\u{25B6}", "\u{23ED}"];
-            let mut bx = 4.0;
-            for label in &btn_labels {
-                painter.text(
-                    egui::pos2(bx + 14.0, transport_y + UI_UNIT_Y * 0.5),
-                    egui::Align2::CENTER_CENTER,
-                    *label,
-                    egui::FontId::proportional(13.0),
-                    text_color,
-                );
-                bx += 30.0;
-            }
-
-            // Frame: label + value
-            painter.text(
-                egui::pos2(bx + 20.0, transport_y + UI_UNIT_Y * 0.5),
-                egui::Align2::LEFT_CENTER,
-                "Frame:",
-                egui::FontId::proportional(13.0),
-                text_color,
-            );
-            painter.text(
-                egui::pos2(bx + 70.0, transport_y + UI_UNIT_Y * 0.5),
-                egui::Align2::CENTER_CENTER,
-                format!("{}", self.current_frame),
-                egui::FontId::proportional(13.0),
-                text_color,
-            );
-
-            painter.text(
-                egui::pos2(bx + 120.0, transport_y + UI_UNIT_Y * 0.5),
-                egui::Align2::LEFT_CENTER,
-                "Start:",
-                egui::FontId::proportional(13.0),
-                text_color,
-            );
-            painter.text(
-                egui::pos2(bx + 170.0, transport_y + UI_UNIT_Y * 0.5),
-                egui::Align2::CENTER_CENTER,
-                format!("{}", self.start_frame),
-                egui::FontId::proportional(13.0),
-                text_color,
-            );
-
-            painter.text(
-                egui::pos2(bx + 200.0, transport_y + UI_UNIT_Y * 0.5),
-                egui::Align2::LEFT_CENTER,
-                "End:",
-                egui::FontId::proportional(13.0),
-                text_color,
-            );
-            painter.text(
-                egui::pos2(bx + 250.0, transport_y + UI_UNIT_Y * 0.5),
-                egui::Align2::CENTER_CENTER,
-                format!("{}", self.end_frame),
-                egui::FontId::proportional(13.0),
-                text_color,
-            );
-        }
-
-        // -- 3D Viewport overlays (grid, gizmo, cursor, info text) --
-        let vp_rect = egui::Rect::from_min_max(
-            egui::pos2(0.0, HEADERY * 2.0),
-            egui::pos2(vp_right, h - TIMELINE_H),
-        );
-
-        // Grid
-        {
-            let center = vp_rect.center();
-            let grid_extent = 400.0;
-            let grid_spacing = 50.0;
-            let steps = (grid_extent / grid_spacing) as i32;
-            let grid_color = egui::Color32::from_rgba_premultiplied(84, 84, 84, 100);
-
-            for i in -steps..=steps {
-                let y = center.y + i as f32 * grid_spacing;
-                if y >= vp_rect.top() && y <= vp_rect.bottom() {
-                    painter.line_segment(
-                        [egui::pos2(vp_rect.left(), y), egui::pos2(vp_rect.right(), y)],
-                        egui::Stroke::new(0.5, grid_color),
-                    );
-                }
-            }
-            for i in -steps..=steps {
-                let x = center.x + i as f32 * grid_spacing;
-                if x >= vp_rect.left() && x <= vp_rect.right() {
-                    painter.line_segment(
-                        [egui::pos2(x, vp_rect.top()), egui::pos2(x, vp_rect.bottom())],
-                        egui::Stroke::new(0.5, grid_color),
-                    );
-                }
-            }
-
-            // Axis lines
-            painter.line_segment(
-                [egui::pos2(vp_rect.left(), center.y), egui::pos2(vp_rect.right(), center.y)],
-                egui::Stroke::new(1.0, egui::Color32::from_rgba_premultiplied(180, 50, 50, 100)),
-            );
-            painter.line_segment(
-                [egui::pos2(center.x, vp_rect.top()), egui::pos2(center.x, vp_rect.bottom())],
-                egui::Stroke::new(1.0, egui::Color32::from_rgba_premultiplied(50, 180, 50, 100)),
-            );
-        }
-
-        // 3D Cursor
-        {
-            let center = vp_rect.center();
-            let size = 10.0;
-            let cursor_red = egui::Color32::from_rgb(255, 0, 0);
-            painter.line_segment(
-                [center - egui::vec2(size, 0.0), center + egui::vec2(size, 0.0)],
-                egui::Stroke::new(1.0, cursor_red),
-            );
-            painter.line_segment(
-                [center - egui::vec2(0.0, size), center + egui::vec2(0.0, size)],
-                egui::Stroke::new(1.0, cursor_red),
-            );
-            painter.circle_stroke(center, 3.0, egui::Stroke::new(1.0, egui::Color32::WHITE));
-            painter.circle_filled(center, 1.5, cursor_red);
-        }
-
-        // Navigation gizmo
-        {
-            let gizmo_origin = vp_rect.left_bottom() + egui::vec2(50.0, -50.0);
-            let axis_len = 40.0;
-            let axis_x_color = egui::Color32::from_rgb(214, 67, 67);
-            let axis_y_color = egui::Color32::from_rgb(104, 188, 80);
-            let axis_z_color = egui::Color32::from_rgb(67, 133, 214);
-
-            painter.circle_filled(gizmo_origin, 48.0, egui::Color32::from_rgba_premultiplied(30, 30, 30, 150));
-
-            painter.line_segment(
-                [gizmo_origin, gizmo_origin + egui::vec2(axis_len, 0.0)],
-                egui::Stroke::new(2.5, axis_x_color),
-            );
-            painter.circle_filled(gizmo_origin + egui::vec2(axis_len + 3.0, 0.0), 4.0, axis_x_color);
-            painter.text(gizmo_origin + egui::vec2(axis_len + 3.0, 0.0), egui::Align2::CENTER_CENTER, "X", egui::FontId::proportional(10.0), egui::Color32::WHITE);
-
-            painter.line_segment(
-                [gizmo_origin, gizmo_origin + egui::vec2(0.0, -axis_len)],
-                egui::Stroke::new(2.5, axis_y_color),
-            );
-            painter.circle_filled(gizmo_origin + egui::vec2(0.0, -axis_len - 3.0), 4.0, axis_y_color);
-            painter.text(gizmo_origin + egui::vec2(0.0, -axis_len - 3.0), egui::Align2::CENTER_CENTER, "Y", egui::FontId::proportional(10.0), egui::Color32::WHITE);
-
-            painter.line_segment(
-                [gizmo_origin, gizmo_origin + egui::vec2(-axis_len * 0.55, axis_len * 0.35)],
-                egui::Stroke::new(2.5, axis_z_color),
-            );
-            painter.circle_filled(gizmo_origin + egui::vec2(-axis_len * 0.55 - 2.0, axis_len * 0.35 + 2.0), 4.0, axis_z_color);
-            painter.text(gizmo_origin + egui::vec2(-axis_len * 0.55 - 2.0, axis_len * 0.35 + 2.0), egui::Align2::CENTER_CENTER, "Z", egui::FontId::proportional(10.0), egui::Color32::WHITE);
-
-            painter.circle_filled(gizmo_origin, 3.0, egui::Color32::from_rgb(180, 180, 180));
-        }
-
-        // Viewport info text
-        painter.text(
-            vp_rect.right_bottom() + egui::vec2(-10.0, -8.0),
-            egui::Align2::RIGHT_BOTTOM,
-            "Verts: 8 | Faces: 6 | Tris: 12 | Objects: 1/3",
-            egui::FontId::proportional(13.0),
-            egui::Color32::from_rgb(140, 140, 140),
-        );
-
-        // 3D Viewport cube callback
-        let cube_obj = &self.objects[0];
-        let t = self.start_time.elapsed().as_secs_f32();
-
-        let loc = cube_obj.location;
-        let rot = cube_obj.rotation;
-        let scl = cube_obj.scale;
-
-        let translate = mat4_translate(loc[0], loc[1], loc[2]);
-        let rotate_x = mat4_rotate_x(rot[0].to_radians());
-        let rotate_y_m = mat4_rotate_y(rot[1].to_radians());
-        let rotate_z = mat4_rotate_z(rot[2].to_radians());
-        let scale = mat4_scale(scl[0], scl[1], scl[2]);
-
-        let spin = mat4_mul(&mat4_rotate_y(t * 0.7), &mat4_rotate_x(t * 0.4));
-        let model_static = mat4_mul(
-            &translate,
-            &mat4_mul(&rotate_z, &mat4_mul(&rotate_y_m, &mat4_mul(&rotate_x, &scale))),
-        );
-        let model = mat4_mul(&model_static, &spin);
-
-        let vp_width = vp_rect.width();
-        let vp_height = vp_rect.height();
-        let aspect = if vp_height > 0.0 { vp_width / vp_height } else { 1.0 };
-
-        let view = mat4_translate(0.0, 0.0, -5.0);
-        let proj = mat4_perspective(std::f32::consts::FRAC_PI_4, aspect, 0.1, 100.0);
-        let mv = mat4_mul(&view, &model);
-        let mvp = mat4_mul(&proj, &mv);
-
-        let callback = egui_wgpu::Callback::new_paint_callback(
-            vp_rect,
-            CubeCallback { mvp },
-        );
-        painter.add(callback);
+            });
     }
 
     // -----------------------------------------------------------------------
@@ -1843,109 +1029,86 @@ impl App {
     // -----------------------------------------------------------------------
 
     fn render(&mut self) {
-        let window = match &self.window {
-            Some(w) => w.clone(),
-            None => return,
-        };
+        if self.gpu.is_none() || self.egui_state.is_none() || self.window.is_none() {
+            return;
+        }
 
-        // Update timeline
+        // Animation update
         if self.playing {
-            let now = Instant::now();
-            let dt = now.duration_since(self.last_frame_time).as_secs_f32();
-            if dt >= 1.0 / 24.0 {
-                self.current_frame += 1;
-                if self.current_frame > self.end_frame {
-                    self.current_frame = self.start_frame;
+            let elapsed = self.start_time.elapsed().as_secs_f32();
+            let fps = 24.0;
+            let frame_offset = (elapsed * fps) as i32;
+            let range = (self.end_frame - self.start_frame).max(1);
+            self.current_frame = self.start_frame + (frame_offset % range);
+        }
+
+        // Get surface texture
+        let output = {
+            let gpu = self.gpu.as_ref().unwrap();
+            match gpu.surface.get_current_texture() {
+                Ok(o) => o,
+                Err(wgpu::SurfaceError::Outdated | wgpu::SurfaceError::Lost) => {
+                    let size = self.window.as_ref().unwrap().inner_size();
+                    let gpu = self.gpu.as_mut().unwrap();
+                    gpu.config.width = size.width.max(1);
+                    gpu.config.height = size.height.max(1);
+                    gpu.surface.configure(&gpu.device, &gpu.config);
+                    return;
                 }
-                self.last_frame_time = now;
-            }
-        }
-
-        let (cfg_w, cfg_h) = {
-            let config = self.surface_config.as_ref().unwrap();
-            (config.width, config.height)
-        };
-        let w = cfg_w as f32;
-        let h = cfg_h as f32;
-
-        // Build DrawList for 2D UI
-        let ui_draw_list = self.build_ui_draw_list(w, h);
-
-        // egui frame (text-only overlay + 3D callback)
-        let raw_input = self.egui_winit.as_mut().unwrap().take_egui_input(&window);
-        self.egui_ctx.begin_pass(raw_input);
-        self.draw_egui_text_overlay(&self.egui_ctx.clone(), w, h);
-        let full_output = self.egui_ctx.end_pass();
-
-        self.egui_winit
-            .as_mut()
-            .unwrap()
-            .handle_platform_output(&window, full_output.platform_output);
-
-        let pixels_per_point = full_output.pixels_per_point;
-        let clipped_primitives = self.egui_ctx.tessellate(full_output.shapes, pixels_per_point);
-        let textures_delta = full_output.textures_delta;
-
-        // GPU rendering
-        let device = self.device.as_ref().unwrap();
-        let queue = self.queue.as_ref().unwrap();
-        let surface = self.surface.as_ref().unwrap();
-
-        // Update 2D UI uniform (screen size)
-        if let Some(ui2d) = &self.ui2d {
-            queue.write_buffer(
-                &ui2d.uniform_buffer,
-                0,
-                bytemuck::cast_slice(&[w, h, 0.0f32, 0.0]),
-            );
-        }
-
-        let output_frame = match surface.get_current_texture() {
-            Ok(tex) => tex,
-            Err(wgpu::SurfaceError::Lost | wgpu::SurfaceError::Outdated) => {
-                self.resize(cfg_w, cfg_h);
-                return;
-            }
-            Err(e) => {
-                eprintln!("Surface error: {e}");
-                return;
+                Err(_) => return,
             }
         };
 
-        let view = output_frame.texture.create_view(&wgpu::TextureViewDescriptor::default());
+        let view = output.texture.create_view(&wgpu::TextureViewDescriptor::default());
 
-        let screen_descriptor = egui_wgpu::ScreenDescriptor {
-            size_in_pixels: [cfg_w, cfg_h],
-            pixels_per_point,
+        // Run egui — take_egui_input, run UI, handle output
+        let raw_input = {
+            let egui_st = self.egui_state.as_mut().unwrap();
+            let window = self.window.as_ref().unwrap();
+            egui_st.winit_state.take_egui_input(window)
         };
 
-        let renderer = self.egui_renderer.as_mut().unwrap();
-
-        for (id, image_delta) in &textures_delta.set {
-            renderer.update_texture(device, queue, *id, image_delta);
-        }
-
-        let mut encoder = device.create_command_encoder(&wgpu::CommandEncoderDescriptor {
-            label: Some("main-encoder"),
+        let ctx = self.egui_ctx.clone();
+        let full_output = ctx.run(raw_input, |ctx| {
+            self.draw_ui(ctx);
         });
 
-        let user_cmd_bufs = renderer.update_buffers(
-            device, queue, &mut encoder, &clipped_primitives, &screen_descriptor,
-        );
-
-        // PASS 1: Clear + 2D UI draw list
         {
-            let mut render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
-                label: Some("ui2d-pass"),
+            let egui_st = self.egui_state.as_mut().unwrap();
+            let window = self.window.as_ref().unwrap();
+            egui_st.winit_state.handle_platform_output(window, full_output.platform_output.clone());
+        }
+
+        let primitives = ctx.tessellate(full_output.shapes, full_output.pixels_per_point);
+
+        let gpu = self.gpu.as_ref().unwrap();
+        let egui_st = self.egui_state.as_mut().unwrap();
+
+        let screen_descriptor = egui_wgpu::ScreenDescriptor {
+            size_in_pixels: [gpu.config.width, gpu.config.height],
+            pixels_per_point: full_output.pixels_per_point,
+        };
+
+        let mut encoder = gpu.device.create_command_encoder(&wgpu::CommandEncoderDescriptor {
+            label: Some("forge3d-encoder"),
+        });
+
+        // Upload egui textures
+        for (id, delta) in &full_output.textures_delta.set {
+            egui_st.renderer.update_texture(&gpu.device, &gpu.queue, *id, delta);
+        }
+        egui_st.renderer.update_buffers(&gpu.device, &gpu.queue, &mut encoder, &primitives, &screen_descriptor);
+
+        // Single render pass
+        {
+            let render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
+                label: Some("egui-render-pass"),
                 color_attachments: &[Some(wgpu::RenderPassColorAttachment {
                     view: &view,
                     resolve_target: None,
                     ops: wgpu::Operations {
                         load: wgpu::LoadOp::Clear(wgpu::Color {
-                            r: 51.0 / 255.0,
-                            g: 51.0 / 255.0,
-                            b: 51.0 / 255.0,
-                            a: 1.0,
+                            r: 0.2, g: 0.2, b: 0.2, a: 1.0,
                         }),
                         store: wgpu::StoreOp::Store,
                     },
@@ -1955,97 +1118,82 @@ impl App {
                 occlusion_query_set: None,
             });
 
-            if let Some(ui2d) = &self.ui2d {
-                // Upload and draw filled triangles
-                if !ui_draw_list.vertices.is_empty() && !ui_draw_list.indices.is_empty() {
-                    let verts: Vec<UiVertex> = ui_draw_list
-                        .vertices
-                        .iter()
-                        .map(UiVertex::from_draw_vertex)
-                        .collect();
-                    let vbo = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-                        label: Some("ui2d-vbo"),
-                        contents: bytemuck::cast_slice(&verts),
-                        usage: wgpu::BufferUsages::VERTEX,
-                    });
-                    let ibo = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-                        label: Some("ui2d-ibo"),
-                        contents: bytemuck::cast_slice(&ui_draw_list.indices),
-                        usage: wgpu::BufferUsages::INDEX,
-                    });
-
-                    render_pass.set_pipeline(&ui2d.tri_pipeline);
-                    render_pass.set_bind_group(0, &ui2d.bind_group, &[]);
-                    render_pass.set_vertex_buffer(0, vbo.slice(..));
-                    render_pass.set_index_buffer(ibo.slice(..), wgpu::IndexFormat::Uint32);
-                    render_pass.draw_indexed(0..ui_draw_list.indices.len() as u32, 0, 0..1);
-                }
-
-                // Upload and draw line segments
-                if !ui_draw_list.line_vertices.is_empty() && !ui_draw_list.line_indices.is_empty() {
-                    let line_verts: Vec<UiVertex> = ui_draw_list
-                        .line_vertices
-                        .iter()
-                        .map(UiVertex::from_draw_vertex)
-                        .collect();
-                    let line_vbo = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-                        label: Some("ui2d-line-vbo"),
-                        contents: bytemuck::cast_slice(&line_verts),
-                        usage: wgpu::BufferUsages::VERTEX,
-                    });
-                    let line_ibo = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-                        label: Some("ui2d-line-ibo"),
-                        contents: bytemuck::cast_slice(&ui_draw_list.line_indices),
-                        usage: wgpu::BufferUsages::INDEX,
-                    });
-
-                    render_pass.set_pipeline(&ui2d.line_pipeline);
-                    render_pass.set_bind_group(0, &ui2d.bind_group, &[]);
-                    render_pass.set_vertex_buffer(0, line_vbo.slice(..));
-                    render_pass.set_index_buffer(line_ibo.slice(..), wgpu::IndexFormat::Uint32);
-                    render_pass.draw_indexed(0..ui_draw_list.line_indices.len() as u32, 0, 0..1);
-                }
-            }
-        }
-
-        // PASS 2: egui (text + 3D cube callback) on top
-        {
-            let render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
-                label: Some("egui-pass"),
-                color_attachments: &[Some(wgpu::RenderPassColorAttachment {
-                    view: &view,
-                    resolve_target: None,
-                    ops: wgpu::Operations {
-                        load: wgpu::LoadOp::Load, // Don't clear — draw on top
-                        store: wgpu::StoreOp::Store,
-                    },
-                })],
-                depth_stencil_attachment: None,
-                timestamp_writes: None,
-                occlusion_query_set: None,
-            });
-
-            renderer.render(
+            egui_st.renderer.render(
                 &mut render_pass.forget_lifetime(),
-                &clipped_primitives,
+                &primitives,
                 &screen_descriptor,
             );
         }
 
-        for id in &textures_delta.free {
-            renderer.free_texture(id);
+        // Free textures
+        for id in &full_output.textures_delta.free {
+            egui_st.renderer.free_texture(id);
         }
 
-        let encoded = encoder.finish();
-        let mut cmd_bufs: Vec<wgpu::CommandBuffer> = user_cmd_bufs;
-        cmd_bufs.push(encoded);
-        queue.submit(cmd_bufs);
-        output_frame.present();
+        gpu.queue.submit(std::iter::once(encoder.finish()));
+        output.present();
+
+        // Request repaint for animation
+        if self.playing {
+            if let Some(w) = &self.window {
+                w.request_redraw();
+            }
+        }
     }
 }
 
 // ---------------------------------------------------------------------------
-// winit ApplicationHandler
+// Blender dark theme
+// ---------------------------------------------------------------------------
+
+fn setup_blender_theme(ctx: &egui::Context) {
+    let mut style = (*ctx.style()).clone();
+    let mut visuals = egui::Visuals::dark();
+
+    // Window/panel backgrounds
+    visuals.window_fill = Color32::from_rgb(48, 48, 48);
+    visuals.panel_fill = Color32::from_rgb(48, 48, 48);
+    visuals.faint_bg_color = Color32::from_rgb(40, 40, 40);
+    visuals.extreme_bg_color = Color32::from_rgb(30, 30, 30);
+
+    // Widget colors
+    visuals.widgets.noninteractive.bg_fill = Color32::from_rgb(61, 61, 61);
+    visuals.widgets.noninteractive.fg_stroke = Stroke::new(1.0, Color32::from_rgb(230, 230, 230));
+    visuals.widgets.noninteractive.bg_stroke = Stroke::new(1.0, Color32::from_rgb(36, 36, 36));
+    visuals.widgets.noninteractive.corner_radius = egui::CornerRadius::same(3);
+
+    visuals.widgets.inactive.bg_fill = Color32::from_rgb(70, 70, 70);
+    visuals.widgets.inactive.fg_stroke = Stroke::new(1.0, Color32::from_rgb(220, 220, 220));
+    visuals.widgets.inactive.bg_stroke = Stroke::new(1.0, Color32::from_rgb(55, 55, 55));
+    visuals.widgets.inactive.corner_radius = egui::CornerRadius::same(3);
+
+    visuals.widgets.hovered.bg_fill = Color32::from_rgb(80, 80, 80);
+    visuals.widgets.hovered.fg_stroke = Stroke::new(1.0, Color32::from_rgb(255, 255, 255));
+    visuals.widgets.hovered.bg_stroke = Stroke::new(1.0, Color32::from_rgb(100, 100, 100));
+
+    visuals.widgets.active.bg_fill = Color32::from_rgb(71, 114, 179);
+    visuals.widgets.active.fg_stroke = Stroke::new(1.0, Color32::from_rgb(255, 255, 255));
+
+    // Selection
+    visuals.selection.bg_fill = Color32::from_rgb(71, 114, 179);
+    visuals.selection.stroke = Stroke::new(1.0, Color32::from_rgb(100, 150, 220));
+
+    // Text styles
+    style.text_styles.insert(TextStyle::Body, FontId::proportional(13.0));
+    style.text_styles.insert(TextStyle::Small, FontId::proportional(11.0));
+    style.text_styles.insert(TextStyle::Button, FontId::proportional(12.0));
+    style.text_styles.insert(TextStyle::Heading, FontId::proportional(14.0));
+
+    // Spacing
+    style.spacing.item_spacing = egui::vec2(4.0, 3.0);
+    style.spacing.button_padding = egui::vec2(6.0, 2.0);
+
+    style.visuals = visuals;
+    ctx.set_style(style);
+}
+
+// ---------------------------------------------------------------------------
+// ApplicationHandler
 // ---------------------------------------------------------------------------
 
 impl ApplicationHandler for App {
@@ -2056,81 +1204,84 @@ impl ApplicationHandler for App {
 
         let attrs = Window::default_attributes()
             .with_title("Forge3D")
-            .with_maximized(true)
-            .with_inner_size(winit::dpi::LogicalSize::new(1920, 1080));
+            .with_inner_size(winit::dpi::LogicalSize::new(1600.0, 900.0))
+            .with_maximized(true);
 
-        let window = Arc::new(event_loop.create_window(attrs).expect("Failed to create window"));
-        self.init_wgpu(window.clone());
-
-        tracing::info!("Forge3D window opened (maximized)");
+        let window = Arc::new(event_loop.create_window(attrs).unwrap());
+        self.init_gpu(window);
     }
 
     fn window_event(&mut self, event_loop: &ActiveEventLoop, _id: WindowId, event: WindowEvent) {
-        if let Some(egui_winit) = &mut self.egui_winit {
-            if let Some(window) = &self.window {
-                let response = egui_winit.on_window_event(window, &event);
-                if response.consumed {
-                    return;
+        // Let egui handle events first
+        if let Some(egui_st) = &mut self.egui_state {
+            let response = egui_st.winit_state.on_window_event(self.window.as_ref().unwrap(), &event);
+            if response.consumed {
+                if let Some(w) = &self.window {
+                    w.request_redraw();
                 }
+                return;
             }
         }
 
         match event {
-            WindowEvent::CloseRequested => {
-                tracing::info!("Window closed");
-                event_loop.exit();
-            }
-            WindowEvent::KeyboardInput {
-                event: KeyEvent {
-                    logical_key: Key::Named(NamedKey::Escape),
-                    state: ElementState::Pressed,
-                    ..
-                },
-                ..
-            } => {
-                tracing::info!("Escape pressed - exiting");
-                event_loop.exit();
-            }
-            WindowEvent::KeyboardInput {
-                event: KeyEvent {
-                    logical_key: Key::Named(NamedKey::Space),
-                    state: ElementState::Pressed,
-                    ..
-                },
-                ..
-            } => {
-                self.playing = !self.playing;
-                self.last_frame_time = Instant::now();
-            }
+            WindowEvent::CloseRequested => event_loop.exit(),
             WindowEvent::Resized(size) => {
                 self.resize(size.width, size.height);
+                if let Some(w) = &self.window {
+                    w.request_redraw();
+                }
+            }
+            WindowEvent::KeyboardInput {
+                event: KeyEvent {
+                    logical_key,
+                    state: ElementState::Pressed,
+                    ..
+                },
+                ..
+            } => {
+                match logical_key {
+                    Key::Named(NamedKey::Escape) => event_loop.exit(),
+                    Key::Named(NamedKey::Space) => {
+                        self.playing = !self.playing;
+                        if self.playing {
+                            self.start_time = Instant::now();
+                        }
+                        if let Some(w) = &self.window {
+                            w.request_redraw();
+                        }
+                    }
+                    _ => {}
+                }
             }
             WindowEvent::RedrawRequested => {
                 self.render();
-                if let Some(w) = &self.window {
-                    w.request_redraw();
+                // Keep redrawing when playing
+                if self.playing {
+                    if let Some(w) = &self.window {
+                        w.request_redraw();
+                    }
                 }
             }
             _ => {}
         }
     }
+
+    fn about_to_wait(&mut self, _event_loop: &ActiveEventLoop) {
+        // Always request redraw for continuous animation of cube
+        if let Some(w) = &self.window {
+            w.request_redraw();
+        }
+    }
 }
 
 // ---------------------------------------------------------------------------
-// Entry point
+// main
 // ---------------------------------------------------------------------------
 
 fn main() {
-    tracing_subscriber::fmt()
-        .with_target(true)
-        .with_thread_ids(false)
-        .with_file(false)
-        .with_line_number(false)
-        .init();
-
-    tracing::info!("Starting Forge3D");
+    tracing_subscriber::fmt::init();
 
     let event_loop = EventLoop::new().expect("Failed to create event loop");
     let mut app = App::new();
-    event_loop.run_app(&mut app).expect("Event loop error");
+    event_loop.run_app(&mut app).expect("Event loop failed");
 }
