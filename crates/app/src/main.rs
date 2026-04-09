@@ -50,35 +50,35 @@ impl CubeVertex {
 #[rustfmt::skip]
 const CUBE_VERTICES: &[CubeVertex] = &[
     // Front face
-    CubeVertex { position: [-0.5, -0.5,  0.5], color: [0.55, 0.55, 0.55] },
-    CubeVertex { position: [ 0.5, -0.5,  0.5], color: [0.55, 0.55, 0.55] },
-    CubeVertex { position: [ 0.5,  0.5,  0.5], color: [0.55, 0.55, 0.55] },
-    CubeVertex { position: [-0.5,  0.5,  0.5], color: [0.55, 0.55, 0.55] },
+    CubeVertex { position: [-0.5, -0.5,  0.5], color: [0.62, 0.60, 0.58] },
+    CubeVertex { position: [ 0.5, -0.5,  0.5], color: [0.62, 0.60, 0.58] },
+    CubeVertex { position: [ 0.5,  0.5,  0.5], color: [0.62, 0.60, 0.58] },
+    CubeVertex { position: [-0.5,  0.5,  0.5], color: [0.62, 0.60, 0.58] },
     // Back face
-    CubeVertex { position: [-0.5, -0.5, -0.5], color: [0.55, 0.55, 0.55] },
-    CubeVertex { position: [ 0.5, -0.5, -0.5], color: [0.55, 0.55, 0.55] },
-    CubeVertex { position: [ 0.5,  0.5, -0.5], color: [0.55, 0.55, 0.55] },
-    CubeVertex { position: [-0.5,  0.5, -0.5], color: [0.55, 0.55, 0.55] },
+    CubeVertex { position: [-0.5, -0.5, -0.5], color: [0.62, 0.60, 0.58] },
+    CubeVertex { position: [ 0.5, -0.5, -0.5], color: [0.62, 0.60, 0.58] },
+    CubeVertex { position: [ 0.5,  0.5, -0.5], color: [0.62, 0.60, 0.58] },
+    CubeVertex { position: [-0.5,  0.5, -0.5], color: [0.62, 0.60, 0.58] },
     // Top face
-    CubeVertex { position: [-0.5,  0.5, -0.5], color: [0.55, 0.55, 0.55] },
-    CubeVertex { position: [ 0.5,  0.5, -0.5], color: [0.55, 0.55, 0.55] },
-    CubeVertex { position: [ 0.5,  0.5,  0.5], color: [0.55, 0.55, 0.55] },
-    CubeVertex { position: [-0.5,  0.5,  0.5], color: [0.55, 0.55, 0.55] },
+    CubeVertex { position: [-0.5,  0.5, -0.5], color: [0.62, 0.60, 0.58] },
+    CubeVertex { position: [ 0.5,  0.5, -0.5], color: [0.62, 0.60, 0.58] },
+    CubeVertex { position: [ 0.5,  0.5,  0.5], color: [0.62, 0.60, 0.58] },
+    CubeVertex { position: [-0.5,  0.5,  0.5], color: [0.62, 0.60, 0.58] },
     // Bottom face
-    CubeVertex { position: [-0.5, -0.5, -0.5], color: [0.55, 0.55, 0.55] },
-    CubeVertex { position: [ 0.5, -0.5, -0.5], color: [0.55, 0.55, 0.55] },
-    CubeVertex { position: [ 0.5, -0.5,  0.5], color: [0.55, 0.55, 0.55] },
-    CubeVertex { position: [-0.5, -0.5,  0.5], color: [0.55, 0.55, 0.55] },
+    CubeVertex { position: [-0.5, -0.5, -0.5], color: [0.62, 0.60, 0.58] },
+    CubeVertex { position: [ 0.5, -0.5, -0.5], color: [0.62, 0.60, 0.58] },
+    CubeVertex { position: [ 0.5, -0.5,  0.5], color: [0.62, 0.60, 0.58] },
+    CubeVertex { position: [-0.5, -0.5,  0.5], color: [0.62, 0.60, 0.58] },
     // Right face
-    CubeVertex { position: [ 0.5, -0.5, -0.5], color: [0.55, 0.55, 0.55] },
-    CubeVertex { position: [ 0.5,  0.5, -0.5], color: [0.55, 0.55, 0.55] },
-    CubeVertex { position: [ 0.5,  0.5,  0.5], color: [0.55, 0.55, 0.55] },
-    CubeVertex { position: [ 0.5, -0.5,  0.5], color: [0.55, 0.55, 0.55] },
+    CubeVertex { position: [ 0.5, -0.5, -0.5], color: [0.62, 0.60, 0.58] },
+    CubeVertex { position: [ 0.5,  0.5, -0.5], color: [0.62, 0.60, 0.58] },
+    CubeVertex { position: [ 0.5,  0.5,  0.5], color: [0.62, 0.60, 0.58] },
+    CubeVertex { position: [ 0.5, -0.5,  0.5], color: [0.62, 0.60, 0.58] },
     // Left face
-    CubeVertex { position: [-0.5, -0.5, -0.5], color: [0.55, 0.55, 0.55] },
-    CubeVertex { position: [-0.5,  0.5, -0.5], color: [0.55, 0.55, 0.55] },
-    CubeVertex { position: [-0.5,  0.5,  0.5], color: [0.55, 0.55, 0.55] },
-    CubeVertex { position: [-0.5, -0.5,  0.5], color: [0.55, 0.55, 0.55] },
+    CubeVertex { position: [-0.5, -0.5, -0.5], color: [0.62, 0.60, 0.58] },
+    CubeVertex { position: [-0.5,  0.5, -0.5], color: [0.62, 0.60, 0.58] },
+    CubeVertex { position: [-0.5,  0.5,  0.5], color: [0.62, 0.60, 0.58] },
+    CubeVertex { position: [-0.5, -0.5,  0.5], color: [0.62, 0.60, 0.58] },
 ];
 
 #[rustfmt::skip]
@@ -891,14 +891,17 @@ impl App {
                         ui.spacing_mut().item_spacing.y = 1.0;
                         for (i, icon) in PROP_TAB_ICONS.iter().enumerate() {
                             let is_active = self.active_prop_tab == i;
-                            let color = if i == 3 {
-                                // Object tab gets orange text
-                                Color32::from_rgb(220, 140, 50)
-                            } else if i == 8 {
-                                // Object Data tab gets green text
-                                Color32::from_rgb(80, 200, 80)
-                            } else {
-                                Color32::from_rgb(180, 180, 180)
+                            let color = match i {
+                                0 => Color32::WHITE,                      // T - Tool
+                                1 => Color32::from_rgb(160, 160, 160),    // S - Scene
+                                2 => Color32::from_rgb(180, 80, 80),      // W - World (red-ish)
+                                3 => Color32::from_rgb(237, 154, 50),     // O - Object (orange)
+                                4 => Color32::from_rgb(70, 130, 220),     // M - Modifiers (blue)
+                                5 => Color32::from_rgb(120, 180, 220),    // P - Particles (light blue)
+                                6 => Color32::from_rgb(120, 180, 220),    // Ph - Physics (light blue)
+                                7 => Color32::from_rgb(200, 180, 50),     // C - Constraints (yellow)
+                                8 => Color32::from_rgb(80, 200, 80),      // D - Data (green)
+                                _ => Color32::from_rgb(180, 180, 180),
                             };
                             let label = egui::RichText::new(*icon)
                                 .size(11.0)
@@ -944,31 +947,33 @@ impl App {
                                     Self::draw_xyz_row(ui, "Scale", &mut obj.scale, 0.01);
                                 });
 
-                            // Relations
-                            let relations_id = ui.make_persistent_id("relations_section");
-                            egui::collapsing_header::CollapsingState::load_with_default_open(ui.ctx(), relations_id, false)
-                                .show_header(ui, |ui| {
-                                    ui.label(
-                                        egui::RichText::new("Relations")
-                                            .color(Color32::from_rgb(200, 200, 200)),
-                                    );
-                                })
-                                .body(|ui| {
-                                    ui.label("Parent: None");
-                                });
-
-                            // Collections
-                            let collections_id = ui.make_persistent_id("collections_section");
-                            egui::collapsing_header::CollapsingState::load_with_default_open(ui.ctx(), collections_id, false)
-                                .show_header(ui, |ui| {
-                                    ui.label(
-                                        egui::RichText::new("Collections")
-                                            .color(Color32::from_rgb(200, 200, 200)),
-                                    );
-                                })
-                                .body(|ui| {
-                                    ui.label("Scene Collection");
-                                });
+                            // Collapsed sections matching Blender
+                            let collapsed_sections = [
+                                ("delta_transform", "Delta Transform"),
+                                ("relations", "Relations"),
+                                ("collections", "Collections"),
+                                ("instancing", "Instancing"),
+                                ("motion_paths", "Motion Paths"),
+                                ("visibility", "Visibility"),
+                                ("custom_properties", "Custom Properties"),
+                            ];
+                            for (id_str, label) in &collapsed_sections {
+                                let sec_id = ui.make_persistent_id(*id_str);
+                                egui::collapsing_header::CollapsingState::load_with_default_open(ui.ctx(), sec_id, false)
+                                    .show_header(ui, |ui| {
+                                        ui.label(
+                                            egui::RichText::new(*label)
+                                                .color(Color32::from_rgb(200, 200, 200)),
+                                        );
+                                    })
+                                    .body(|ui| {
+                                        ui.label(
+                                            egui::RichText::new("(empty)")
+                                                .color(Color32::from_rgb(120, 120, 120))
+                                                .size(11.0),
+                                        );
+                                    });
+                            }
                         }
                     });
                 });
@@ -1075,7 +1080,7 @@ impl App {
 
                 let t = self.start_time.elapsed().as_secs_f32();
                 let model = mat4_mul(&mat4_rotate_y(t * 0.7), &mat4_rotate_x(0.4));
-                let view = mat4_translate(0.0, 0.0, -3.0);
+                let view = mat4_translate(0.0, 0.0, -8.0);
                 let proj = mat4_perspective(std::f32::consts::FRAC_PI_4, aspect, 0.1, 100.0);
                 let mvp = mat4_mul(&proj, &mat4_mul(&view, &model));
 
@@ -1088,21 +1093,69 @@ impl App {
                 // #9: Grid overlay with perspective-like alpha fade
                 let painter = ui.painter();
                 let center = rect.center();
-                let grid_spacing = 50.0;
+                let grid_spacing = 30.0;
+                let sub_grid_spacing = 6.0;
                 let max_dist = rect.width().max(rect.height()) * 0.5;
 
-                // Helper: draw grid lines with alpha fading from center
+                // Sub-grid lines (very subtle)
+                {
+                    let mut y = center.y;
+                    while y >= rect.top() {
+                        let dist = (center.y - y).abs();
+                        let alpha = (1.0 - (dist / max_dist).powf(0.6)).max(0.0);
+                        let a = (20.0 * alpha) as u8;
+                        if a > 1 {
+                            let c = Color32::from_rgba_premultiplied(50, 50, 50, a);
+                            painter.line_segment([egui::pos2(rect.left(), y), egui::pos2(rect.right(), y)], Stroke::new(0.3, c));
+                        }
+                        y -= sub_grid_spacing;
+                    }
+                    y = center.y + sub_grid_spacing;
+                    while y <= rect.bottom() {
+                        let dist = (y - center.y).abs();
+                        let alpha = (1.0 - (dist / max_dist).powf(0.6)).max(0.0);
+                        let a = (20.0 * alpha) as u8;
+                        if a > 1 {
+                            let c = Color32::from_rgba_premultiplied(50, 50, 50, a);
+                            painter.line_segment([egui::pos2(rect.left(), y), egui::pos2(rect.right(), y)], Stroke::new(0.3, c));
+                        }
+                        y += sub_grid_spacing;
+                    }
+                    let mut x = center.x;
+                    while x >= rect.left() {
+                        let dist = (center.x - x).abs();
+                        let alpha = (1.0 - (dist / max_dist).powf(0.6)).max(0.0);
+                        let a = (20.0 * alpha) as u8;
+                        if a > 1 {
+                            let c = Color32::from_rgba_premultiplied(50, 50, 50, a);
+                            painter.line_segment([egui::pos2(x, rect.top()), egui::pos2(x, rect.bottom())], Stroke::new(0.3, c));
+                        }
+                        x -= sub_grid_spacing;
+                    }
+                    x = center.x + sub_grid_spacing;
+                    while x <= rect.right() {
+                        let dist = (x - center.x).abs();
+                        let alpha = (1.0 - (dist / max_dist).powf(0.6)).max(0.0);
+                        let a = (20.0 * alpha) as u8;
+                        if a > 1 {
+                            let c = Color32::from_rgba_premultiplied(50, 50, 50, a);
+                            painter.line_segment([egui::pos2(x, rect.top()), egui::pos2(x, rect.bottom())], Stroke::new(0.3, c));
+                        }
+                        x += sub_grid_spacing;
+                    }
+                }
+
+                // Main grid lines
                 let draw_grid_line = |p0: egui::Pos2, p1: egui::Pos2, dist_from_center: f32| {
                     let alpha = (1.0 - (dist_from_center / max_dist).powf(0.6)).max(0.0);
-                    let a = (60.0 * alpha) as u8;
+                    let a = (40.0 * alpha) as u8;
                     if a > 2 {
-                        let c = Color32::from_rgba_premultiplied(70, 70, 70, a);
-                        let width = if dist_from_center < grid_spacing * 0.5 { 0.8 } else { 0.5 };
-                        painter.line_segment([p0, p1], Stroke::new(width, c));
+                        let c = Color32::from_rgba_premultiplied(60, 60, 60, a);
+                        painter.line_segment([p0, p1], Stroke::new(0.5, c));
                     }
                 };
 
-                // Horizontal lines
+                // Horizontal grid lines
                 let mut y = center.y;
                 let mut idx = 0.0_f32;
                 while y >= rect.top() {
@@ -1120,7 +1173,7 @@ impl App {
                     idx += 1.0;
                 }
 
-                // Vertical lines
+                // Vertical grid lines
                 let mut x = center.x;
                 idx = 0.0;
                 while x >= rect.left() {
@@ -1138,14 +1191,71 @@ impl App {
                     idx += 1.0;
                 }
 
-                // Axis lines (X = red, Y = green)
+                // Colored axis lines: X = bright red, Y = bright green
                 painter.line_segment(
                     [egui::pos2(rect.left(), center.y), egui::pos2(rect.right(), center.y)],
-                    Stroke::new(1.0, Color32::from_rgba_premultiplied(150, 50, 50, 100)),
+                    Stroke::new(1.5, Color32::from_rgb(180, 60, 60)),
                 );
                 painter.line_segment(
                     [egui::pos2(center.x, rect.top()), egui::pos2(center.x, rect.bottom())],
-                    Stroke::new(1.0, Color32::from_rgba_premultiplied(50, 150, 50, 100)),
+                    Stroke::new(1.5, Color32::from_rgb(60, 180, 60)),
+                );
+
+                // 3D cursor: crosshair at center
+                let cursor_size = 6.0;
+                painter.line_segment(
+                    [egui::pos2(center.x - cursor_size, center.y), egui::pos2(center.x + cursor_size, center.y)],
+                    Stroke::new(1.5, Color32::from_rgb(255, 50, 50)),
+                );
+                painter.line_segment(
+                    [egui::pos2(center.x, center.y - cursor_size), egui::pos2(center.x, center.y + cursor_size)],
+                    Stroke::new(1.5, Color32::from_rgb(255, 50, 50)),
+                );
+                painter.circle_stroke(center, 4.0, Stroke::new(1.0, Color32::WHITE));
+
+                // Camera wireframe indicator
+                let cam_pos = egui::pos2(center.x - 100.0, center.y - 30.0);
+                let cam_color = Color32::from_rgb(100, 100, 100);
+                // Small pyramid shape for camera
+                painter.line_segment([egui::pos2(cam_pos.x, cam_pos.y - 6.0), egui::pos2(cam_pos.x - 8.0, cam_pos.y + 6.0)], Stroke::new(1.0, cam_color));
+                painter.line_segment([egui::pos2(cam_pos.x, cam_pos.y - 6.0), egui::pos2(cam_pos.x + 8.0, cam_pos.y + 6.0)], Stroke::new(1.0, cam_color));
+                painter.line_segment([egui::pos2(cam_pos.x - 8.0, cam_pos.y + 6.0), egui::pos2(cam_pos.x + 8.0, cam_pos.y + 6.0)], Stroke::new(1.0, cam_color));
+                // Small triangle on top (viewfinder)
+                painter.line_segment([egui::pos2(cam_pos.x - 3.0, cam_pos.y - 6.0), egui::pos2(cam_pos.x, cam_pos.y - 10.0)], Stroke::new(1.0, cam_color));
+                painter.line_segment([egui::pos2(cam_pos.x + 3.0, cam_pos.y - 6.0), egui::pos2(cam_pos.x, cam_pos.y - 10.0)], Stroke::new(1.0, cam_color));
+
+                // Light indicator (dot/circle)
+                let light_pos = egui::pos2(center.x + 50.0, center.y - 80.0);
+                painter.circle_filled(light_pos, 3.0, Color32::from_rgb(200, 180, 60));
+                painter.circle_stroke(light_pos, 6.0, Stroke::new(0.8, Color32::from_rgb(200, 180, 60)));
+                // Small rays
+                for angle_deg in [0.0_f32, 45.0, 90.0, 135.0, 180.0, 225.0, 270.0, 315.0] {
+                    let angle = angle_deg.to_radians();
+                    let inner = 8.0;
+                    let outer = 11.0;
+                    painter.line_segment(
+                        [
+                            egui::pos2(light_pos.x + angle.cos() * inner, light_pos.y + angle.sin() * inner),
+                            egui::pos2(light_pos.x + angle.cos() * outer, light_pos.y + angle.sin() * outer),
+                        ],
+                        Stroke::new(0.6, Color32::from_rgb(200, 180, 60)),
+                    );
+                }
+
+                // "User Perspective" text in top-left of viewport
+                painter.text(
+                    egui::pos2(rect.left() + 10.0, rect.top() + 10.0),
+                    egui::Align2::LEFT_TOP,
+                    "User Perspective",
+                    egui::FontId::proportional(11.0),
+                    Color32::from_rgb(140, 140, 140),
+                );
+                painter.text(
+                    egui::pos2(rect.left() + 10.0, rect.top() + 24.0),
+                    egui::Align2::LEFT_TOP,
+                    "Collection | Camera 1.0m",
+                    egui::FontId::proportional(10.0),
+                    Color32::from_rgb(110, 110, 110),
                 );
 
                 // #6: XYZ gizmo in TOP-RIGHT corner
