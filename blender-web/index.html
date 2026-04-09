@@ -21,13 +21,12 @@ html, body {
   width: 100vw;
   height: 100vh;
   overflow: hidden;
-  background: #3D3D3D;               /* Panel background */
+  background: #3D3D3D;
   font-family: "Inter", "DejaVu Sans", -apple-system, sans-serif;
   font-size: 12px;
-  color: #E6E6E6;                    /* Text color */
+  color: #E6E6E6;
 }
 
-/* Scrollbar styling */
 ::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-track { background: #282828; }
 ::-webkit-scrollbar-thumb { background: #555; border-radius: 3px; }
@@ -58,10 +57,10 @@ button, input, select {
 /* ── Top Header Bar (26px) ────────────────────────────────── */
 #header {
   grid-area: header;
-  background: #303030;               /* Header bg */
+  background: #303030;
   display: flex;
   align-items: center;
-  border-bottom: 1px solid #242424;  /* Separator */
+  border-bottom: 1px solid #242424;
   user-select: none;
 }
 
@@ -77,6 +76,12 @@ button, input, select {
   height: 16px;
 }
 
+#header .logo .version {
+  font-size: 11px;
+  color: #999;
+  margin-left: 2px;
+}
+
 #header .menus {
   display: flex;
   gap: 0;
@@ -89,13 +94,14 @@ button, input, select {
   cursor: pointer;
   position: relative;
   font-size: 12px;
+  background: transparent;
+  border-radius: 3px;
 }
 
 #header .menus button:hover {
   background: #505050;
 }
 
-/* Dropdown menus */
 .menu-dropdown {
   position: fixed;
   background: #3D3D3D;
@@ -121,7 +127,7 @@ button, input, select {
 }
 
 .menu-dropdown .item:hover {
-  background: #4772B3;               /* Widget selected */
+  background: #4772B3;
 }
 
 .menu-dropdown .shortcut {
@@ -161,14 +167,35 @@ button, input, select {
 }
 
 .workspace-tabs button.active {
-  background: #505050;               /* Active workspace */
-  color: #FFFFFF;                    /* Text highlight */
+  background: #505050;
+  color: #FFFFFF;
+}
+
+/* Scene / ViewLayer dropdowns on the right */
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: 8px;
+  margin-right: 8px;
+}
+
+.header-right select {
+  background: #454545;
+  padding: 1px 6px;
+  border-radius: 3px;
+  cursor: pointer;
+  height: 20px;
+  color: #E6E6E6;
+  font-size: 11px;
+  border: none;
+  outline: none;
 }
 
 /* ── Left Toolbar (40px wide) ─────────────────────────────── */
 #toolbar {
   grid-area: toolbar;
-  background: #3D3D3D;
+  background: #353535;
   border-right: 1px solid #242424;
   display: flex;
   flex-direction: column;
@@ -179,24 +206,24 @@ button, input, select {
 }
 
 .tool-btn {
-  width: 32px;
-  height: 32px;
+  width: 30px;
+  height: 30px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 4px;
+  border-radius: 3px;
   cursor: pointer;
   color: #CCC;
-  font-size: 14px;
+  font-size: 15px;
   flex-shrink: 0;
 }
 
 .tool-btn:hover {
-  background: #606060;               /* Hover highlight */
+  background: #505050;
 }
 
 .tool-btn.active {
-  background: #4772B3;               /* Widget selected */
+  background: #4772B3;
   color: #FFF;
 }
 
@@ -254,11 +281,26 @@ button, input, select {
   background: #606060;
 }
 
+.vp-btn.active-shade {
+  background: #505050;
+  color: #FFF;
+}
+
+.vp-text {
+  font-size: 11px;
+  color: #CCC;
+  cursor: pointer;
+}
+
+.vp-text:hover {
+  color: #FFF;
+}
+
 #canvas-wrap {
   flex: 1;
   position: relative;
   overflow: hidden;
-  background: #393939;               /* Viewport bg */
+  background: #393939;
 }
 
 #canvas-wrap canvas {
@@ -267,7 +309,6 @@ button, input, select {
   display: block;
 }
 
-/* Viewport overlays */
 .vp-overlay {
   position: absolute;
   pointer-events: none;
@@ -284,13 +325,13 @@ button, input, select {
 #vp-gizmo {
   top: 8px;
   right: 8px;
-  width: 60px;
-  height: 60px;
+  width: 70px;
+  height: 70px;
 }
 
 #vp-gizmo canvas {
-  width: 60px;
-  height: 60px;
+  width: 70px;
+  height: 70px;
 }
 
 /* ── Right Sidebar ────────────────────────────────────────── */
@@ -304,7 +345,7 @@ button, input, select {
 
 /* Outliner panel */
 #outliner {
-  background: #282828;               /* Outliner bg */
+  background: #282828;
   flex: 0 0 auto;
   min-height: 140px;
   max-height: 40%;
@@ -329,6 +370,42 @@ button, input, select {
   flex: 1;
 }
 
+#outliner-header .ol-hdr-icon {
+  flex: 0;
+  color: #888;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+#outliner-header .ol-hdr-icon:hover {
+  color: #CCC;
+}
+
+.ol-display-mode {
+  height: 20px;
+  display: flex;
+  align-items: center;
+  padding: 0 8px;
+  font-size: 10px;
+  color: #999;
+  background: #2C2C2C;
+  border-bottom: 1px solid #242424;
+  flex-shrink: 0;
+}
+
+.ol-display-mode select {
+  background: #3A3A3A;
+  padding: 0 4px;
+  border-radius: 2px;
+  cursor: pointer;
+  height: 16px;
+  color: #CCC;
+  font-size: 10px;
+  margin-left: 4px;
+  border: none;
+  outline: none;
+}
+
 #outliner-body {
   flex: 1;
   overflow-y: auto;
@@ -345,12 +422,16 @@ button, input, select {
   font-size: 11px;
 }
 
+.ol-row:nth-child(even) {
+  background: rgba(255,255,255,0.015);
+}
+
 .ol-row:hover {
   background: #3A3A3A;
 }
 
 .ol-row.selected {
-  background: #4772B3;               /* Selection highlight */
+  background: #4772B3;
   color: #FFF;
 }
 
@@ -372,6 +453,12 @@ button, input, select {
   flex: 1;
 }
 
+.ol-restrict {
+  display: flex;
+  gap: 2px;
+  margin-left: auto;
+}
+
 .ol-vis {
   width: 16px;
   text-align: center;
@@ -386,7 +473,7 @@ button, input, select {
 
 /* Properties panel */
 #properties {
-  background: #303030;               /* Properties bg */
+  background: #303030;
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -406,18 +493,18 @@ button, input, select {
   flex-direction: column;
   align-items: center;
   padding-top: 4px;
-  gap: 1px;
+  gap: 2px;
   flex-shrink: 0;
   border-right: 1px solid #242424;
 }
 
 .ptab {
-  width: 24px;
-  height: 24px;
+  width: 22px;
+  height: 22px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 3px;
+  border-radius: 50%;
   cursor: pointer;
   font-size: 10px;
   color: #AAA;
@@ -431,6 +518,7 @@ button, input, select {
 .ptab.active {
   background: #4772B3;
   color: #FFF;
+  box-shadow: 0 0 4px rgba(71,114,179,0.5);
 }
 
 #props-content {
@@ -453,7 +541,8 @@ button, input, select {
   border-radius: 3px;
   gap: 4px;
   font-size: 11px;
-  color: #EEEEEE;                    /* Title color */
+  color: #EEEEEE;
+  background: #353535;
 }
 
 .prop-section-header:hover {
@@ -490,21 +579,20 @@ button, input, select {
   gap: 2px;
 }
 
-/* Number input fields (dark rounded rects) */
 .prop-input {
   flex: 1;
   display: flex;
   align-items: center;
   height: 20px;
-  background: #545454;               /* Widget inner */
-  border-radius: 3px;
+  background: #2D2D2D;
+  border-radius: 4px;
   overflow: hidden;
   cursor: ew-resize;
   user-select: none;
 }
 
 .prop-input:hover {
-  background: #606060;
+  background: #383838;
 }
 
 .prop-input .axis-tag {
@@ -519,9 +607,9 @@ button, input, select {
   color: #FFF;
 }
 
-.prop-input .axis-tag.x { background: #CC3333; }  /* X axis color */
-.prop-input .axis-tag.y { background: #33CC33; }  /* Y axis color */
-.prop-input .axis-tag.z { background: #3366CC; }  /* Z axis color */
+.prop-input .axis-tag.x { background: #CC3333; }
+.prop-input .axis-tag.y { background: #33CC33; }
+.prop-input .axis-tag.z { background: #3366CC; }
 
 .prop-input .val {
   flex: 1;
@@ -531,16 +619,37 @@ button, input, select {
 }
 
 /* ── Timeline (32px) ──────────────────────────────────────── */
-#timeline {
+#timeline-wrap {
   grid-area: timeline;
+  display: flex;
+  flex-direction: column;
+  border-top: 1px solid #242424;
   background: #303030;
+}
+
+#timeline-ruler {
+  height: 14px;
+  background: #2A2A2A;
+  border-bottom: 1px solid #242424;
+  position: relative;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+#timeline-ruler canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+#timeline {
   display: flex;
   align-items: center;
-  border-top: 1px solid #242424;
   padding: 0 8px;
   gap: 6px;
   font-size: 11px;
   user-select: none;
+  flex: 1;
 }
 
 #timeline .tl-label {
@@ -571,7 +680,7 @@ button, input, select {
 .tl-input {
   width: 48px;
   height: 18px;
-  background: #545454;
+  background: #2D2D2D;
   border-radius: 3px;
   text-align: center;
   font-size: 11px;
@@ -607,8 +716,8 @@ button, input, select {
   display: flex;
   align-items: center;
   padding: 0 10px;
-  font-size: 11px;
-  color: #B0B0B0;
+  font-size: 10px;
+  color: #AAAAAA;
   border-top: 1px solid #242424;
   gap: 20px;
 }
@@ -627,6 +736,7 @@ button, input, select {
       <circle cx="8" cy="8" r="2.5" fill="#E87D0D"/>
     </svg>
     <span style="font-weight:600;color:#EEE">Blender</span>
+    <span class="version">5.1</span>
   </div>
   <div class="menus">
     <button data-menu="file">File</button>
@@ -646,20 +756,24 @@ button, input, select {
     <button data-ws="Rendering">Rendering</button>
     <button data-ws="Compositing">Compositing</button>
   </div>
+  <div class="header-right">
+    <select><option>Scene</option></select>
+    <select><option>ViewLayer</option></select>
+  </div>
 </div>
 
 <!-- ═══════════════════════════════════════════════════════════
      LEFT TOOLBAR
      ═══════════════════════════════════════════════════════════ -->
 <div id="toolbar">
-  <div class="tool-btn active" title="Select Box (W)">&#9701;</div>
+  <div class="tool-btn active" title="Select Box (W)">&#10697;</div>
   <div class="tool-btn" title="Cursor">&#10010;</div>
-  <div class="tool-btn" title="Move (G)">&#8651;</div>
-  <div class="tool-btn" title="Rotate (R)">&#8634;</div>
-  <div class="tool-btn" title="Scale (S)">&#8596;</div>
-  <div class="tool-btn" title="Transform">&#9638;</div>
+  <div class="tool-btn" title="Move (G)">&#10021;</div>
+  <div class="tool-btn" title="Rotate (R)">&#8635;</div>
+  <div class="tool-btn" title="Scale (S)">&#11026;</div>
+  <div class="tool-btn" title="Transform">&#8862;</div>
   <div class="tool-btn" title="Annotate">&#9998;</div>
-  <div class="tool-btn" title="Measure">&#8967;</div>
+  <div class="tool-btn" title="Measure" style="font-size:12px">&#9031;</div>
   <div class="tool-btn" title="Add (Shift+A)">&#10010;</div>
 </div>
 
@@ -668,6 +782,7 @@ button, input, select {
      ═══════════════════════════════════════════════════════════ -->
 <div id="viewport">
   <div id="viewport-header">
+    <span style="font-size:12px">&#9881;</span>
     <select id="mode-select">
       <option>Object Mode</option>
       <option>Edit Mode</option>
@@ -677,17 +792,19 @@ button, input, select {
       <option>Texture Paint</option>
     </select>
     <div class="vp-sep"></div>
-    <span>Global</span>
+    <span class="vp-text">Global &#9662;</span>
     <div class="vp-sep"></div>
     <div class="vp-btn" title="Pivot Point">&#9678;</div>
-    <div class="vp-btn" title="Snap">&#9874;</div>
     <div class="vp-sep"></div>
-    <div class="vp-btn" title="Wireframe">&#9675;</div>
-    <div class="vp-btn" title="Solid">&#9679;</div>
-    <div class="vp-btn" title="Material">&#9678;</div>
-    <div class="vp-btn" title="Rendered">&#9899;</div>
+    <div class="vp-btn" title="Snap">&#9874;</div>
+    <div class="vp-btn" title="Proportional Editing">&#9711;</div>
     <span style="flex:1"></span>
-    <span style="color:#888;font-size:10px">Viewport Shading</span>
+    <div class="vp-btn" title="Wireframe">&#9675;</div>
+    <div class="vp-btn" title="Solid" style="color:#FFF">&#9679;</div>
+    <div class="vp-btn" title="Material Preview">&#9678;</div>
+    <div class="vp-btn" title="Rendered">&#9899;</div>
+    <div class="vp-sep"></div>
+    <div class="vp-btn" title="Viewport Overlays">&#9662;</div>
   </div>
   <div id="canvas-wrap">
     <canvas id="glcanvas"></canvas>
@@ -696,7 +813,7 @@ button, input, select {
       <div style="color:#888">Collection | Cube &nbsp; 1.0m</div>
     </div>
     <div class="vp-overlay" id="vp-gizmo">
-      <canvas id="gizmo-canvas" width="120" height="120"></canvas>
+      <canvas id="gizmo-canvas" width="140" height="140"></canvas>
     </div>
   </div>
 </div>
@@ -710,7 +827,11 @@ button, input, select {
   <div id="outliner">
     <div id="outliner-header">
       <span>Outliner</span>
-      <span style="color:#888;font-size:10px;flex:0">Display Mode: View Layer</span>
+      <span class="ol-hdr-icon" title="Filter">&#9698;</span>
+      <span class="ol-hdr-icon" title="Search">&#128269;</span>
+    </div>
+    <div class="ol-display-mode">
+      Display Mode: <select><option>View Layer</option><option>Scenes</option><option>Blender File</option></select>
     </div>
     <div id="outliner-body">
       <div class="ol-row" data-expand="scene">
@@ -722,20 +843,29 @@ button, input, select {
         <div class="ol-row selected" data-obj="Cube" style="padding-left:24px">
           <span class="ol-icon" style="color:#4CBB4C">&#9646;</span>
           <span class="ol-name">Cube</span>
-          <span class="ol-vis" title="Visibility">&#128065;</span>
-          <span class="ol-vis" title="Selectability">&#9670;</span>
+          <span class="ol-restrict">
+            <span class="ol-vis" title="Visibility">&#128065;</span>
+            <span class="ol-vis" title="Camera">&#9654;</span>
+            <span class="ol-vis" title="Restrict">&#9698;</span>
+          </span>
         </div>
         <div class="ol-row" data-obj="Camera" style="padding-left:24px">
           <span class="ol-icon" style="color:#AAA">&#9654;</span>
           <span class="ol-name">Camera</span>
-          <span class="ol-vis" title="Visibility">&#128065;</span>
-          <span class="ol-vis" title="Selectability">&#9670;</span>
+          <span class="ol-restrict">
+            <span class="ol-vis" title="Visibility">&#128065;</span>
+            <span class="ol-vis" title="Camera">&#9654;</span>
+            <span class="ol-vis" title="Restrict">&#9698;</span>
+          </span>
         </div>
         <div class="ol-row" data-obj="Light" style="padding-left:24px">
           <span class="ol-icon" style="color:#F5D76E">&#9679;</span>
           <span class="ol-name">Light</span>
-          <span class="ol-vis" title="Visibility">&#128065;</span>
-          <span class="ol-vis" title="Selectability">&#9670;</span>
+          <span class="ol-restrict">
+            <span class="ol-vis" title="Visibility">&#128065;</span>
+            <span class="ol-vis" title="Camera">&#9654;</span>
+            <span class="ol-vis" title="Restrict">&#9698;</span>
+          </span>
         </div>
       </div>
     </div>
@@ -745,15 +875,15 @@ button, input, select {
   <div id="properties">
     <div id="props-wrap">
       <div id="props-tabbar">
-        <div class="ptab" title="Tool">T</div>
-        <div class="ptab" title="Scene">S</div>
-        <div class="ptab" title="World">W</div>
-        <div class="ptab active" title="Object Properties">O</div>
-        <div class="ptab" title="Modifiers">M</div>
-        <div class="ptab" title="Particles">P</div>
-        <div class="ptab" title="Physics">Ph</div>
-        <div class="ptab" title="Constraints">C</div>
-        <div class="ptab" title="Object Data">D</div>
+        <div class="ptab" title="Tool" style="color:#888">T</div>
+        <div class="ptab" title="Scene" style="color:#6C9D6C">S</div>
+        <div class="ptab" title="World" style="color:#C46C6C">W</div>
+        <div class="ptab active" title="Object Properties" style="color:#E89040">O</div>
+        <div class="ptab" title="Modifiers" style="color:#6C8FCC">M</div>
+        <div class="ptab" title="Particles" style="color:#6CCCC4">P</div>
+        <div class="ptab" title="Physics" style="color:#CC6C6C">Ph</div>
+        <div class="ptab" title="Constraints" style="color:#C4A86C">C</div>
+        <div class="ptab" title="Object Data" style="color:#6CCC6C">D</div>
       </div>
       <div id="props-content">
 
@@ -878,25 +1008,28 @@ button, input, select {
 <!-- ═══════════════════════════════════════════════════════════
      TIMELINE BAR
      ═══════════════════════════════════════════════════════════ -->
-<div id="timeline">
-  <span class="tl-label">Dope Sheet</span>
-  <div class="vp-sep"></div>
-  <span class="tl-label">Marker</span>
-  <span class="tl-label">Playback</span>
-  <div class="vp-sep"></div>
-  <div class="tl-btn" title="Jump to Start" id="tl-start">&#9198;</div>
-  <div class="tl-btn" title="Reverse" id="tl-rev">&#9194;</div>
-  <div class="tl-btn" title="Play / Pause (Space)" id="tl-play">&#9654;</div>
-  <div class="tl-btn" title="Forward" id="tl-fwd">&#9193;</div>
-  <div class="tl-btn" title="Jump to End" id="tl-end">&#9197;</div>
-  <div class="vp-sep"></div>
-  <span class="tl-label">Frame:</span>
-  <input class="tl-input" id="frame-num" value="1" type="number" min="1" max="250">
-  <input type="range" id="frame-slider" min="1" max="250" value="1">
-  <span class="tl-label">Start:</span>
-  <input class="tl-input" value="1" readonly>
-  <span class="tl-label">End:</span>
-  <input class="tl-input" value="250" readonly>
+<div id="timeline-wrap">
+  <div id="timeline-ruler"><canvas id="ruler-canvas"></canvas></div>
+  <div id="timeline">
+    <span class="tl-label">Dope Sheet</span>
+    <div class="vp-sep"></div>
+    <span class="tl-label">Marker</span>
+    <span class="tl-label">Playback</span>
+    <div class="vp-sep"></div>
+    <div class="tl-btn" title="Jump to Start" id="tl-start">&#9198;</div>
+    <div class="tl-btn" title="Reverse" id="tl-rev">&#9194;</div>
+    <div class="tl-btn" title="Play / Pause (Space)" id="tl-play">&#9654;</div>
+    <div class="tl-btn" title="Forward" id="tl-fwd">&#9193;</div>
+    <div class="tl-btn" title="Jump to End" id="tl-end">&#9197;</div>
+    <div class="vp-sep"></div>
+    <span class="tl-label">Frame:</span>
+    <input class="tl-input" id="frame-num" value="1" type="number" min="1" max="250">
+    <input type="range" id="frame-slider" min="1" max="250" value="1">
+    <span class="tl-label">Start:</span>
+    <input class="tl-input" value="1" readonly>
+    <span class="tl-label">End:</span>
+    <input class="tl-input" value="250" readonly>
+  </div>
 </div>
 
 <!-- ═══════════════════════════════════════════════════════════
@@ -1020,10 +1153,10 @@ document.querySelectorAll('.prop-section-header').forEach(hdr => {
     const arrow = hdr.querySelector('.arrow');
     if (body.style.display === 'none') {
       body.style.display = '';
-      arrow.innerHTML = '&#9660;';    // down arrow (expanded)
+      arrow.innerHTML = '&#9660;';
     } else {
       body.style.display = 'none';
-      arrow.innerHTML = '&#9654;';    // right arrow (collapsed)
+      arrow.innerHTML = '&#9654;';
     }
   });
 });
@@ -1051,7 +1184,7 @@ document.querySelectorAll('.ol-row[data-obj]').forEach(row => {
   });
 });
 
-// ── Drag Number Inputs (change property values) ──
+// ── Drag Number Inputs ──
 document.querySelectorAll('.prop-input[data-prop]').forEach(inp => {
   let dragging = false, startX = 0, startVal = 0;
   const prop = inp.dataset.prop;
@@ -1120,7 +1253,7 @@ function syncFrame() {
 
 // ── Keyboard Shortcuts ──
 document.addEventListener('keydown', e => {
-  if (e.target.tagName === 'INPUT') return; // don't capture when typing in inputs
+  if (e.target.tagName === 'INPUT') return;
   if (e.code === 'Space') {
     e.preventDefault();
     togglePlay();
@@ -1131,6 +1264,67 @@ document.addEventListener('keydown', e => {
     closeMenus();
   }
 });
+
+/* ══════════════════════════════════════════════════════════════
+   TIMELINE RULER
+   ══════════════════════════════════════════════════════════════ */
+function drawRuler() {
+  const rc = document.getElementById('ruler-canvas');
+  const rctx = rc.getContext('2d');
+  const dpr = window.devicePixelRatio || 1;
+  const w = rc.parentElement.clientWidth;
+  const h = rc.parentElement.clientHeight;
+  rc.width = w * dpr;
+  rc.height = h * dpr;
+  rctx.scale(dpr, dpr);
+
+  rctx.clearRect(0, 0, w, h);
+  rctx.fillStyle = '#2A2A2A';
+  rctx.fillRect(0, 0, w, h);
+
+  const startFrame = 1, endFrame = 250;
+  const pxPerFrame = w / (endFrame - startFrame);
+
+  rctx.strokeStyle = '#555';
+  rctx.fillStyle = '#888';
+  rctx.font = '8px Inter, sans-serif';
+
+  for (let f = startFrame; f <= endFrame; f++) {
+    const x = (f - startFrame) * pxPerFrame;
+    if (f % 50 === 0) {
+      rctx.beginPath();
+      rctx.moveTo(x, h);
+      rctx.lineTo(x, h - 10);
+      rctx.strokeStyle = '#888';
+      rctx.stroke();
+      rctx.fillText(f.toString(), x + 2, 9);
+    } else if (f % 10 === 0) {
+      rctx.beginPath();
+      rctx.moveTo(x, h);
+      rctx.lineTo(x, h - 6);
+      rctx.strokeStyle = '#666';
+      rctx.stroke();
+    }
+  }
+
+  // Current frame indicator
+  const cx = (state.frame - startFrame) * pxPerFrame;
+  rctx.fillStyle = '#5699F0';
+  rctx.beginPath();
+  rctx.moveTo(cx - 4, 0);
+  rctx.lineTo(cx + 4, 0);
+  rctx.lineTo(cx, 6);
+  rctx.closePath();
+  rctx.fill();
+  rctx.strokeStyle = '#5699F0';
+  rctx.beginPath();
+  rctx.moveTo(cx, 0);
+  rctx.lineTo(cx, h);
+  rctx.stroke();
+}
+
+window.addEventListener('resize', drawRuler);
+drawRuler();
 
 /* ══════════════════════════════════════════════════════════════
    WEBGL 3D VIEWPORT RENDERER
@@ -1146,7 +1340,6 @@ if (!gl) {
 
 /* ── Shader Compilation ───────────────────────────────────── */
 
-// Shaded vertex shader (for lit geometry with normals)
 const SHADED_VS = `
   attribute vec3 aPos;
   attribute vec3 aNorm;
@@ -1159,7 +1352,6 @@ const SHADED_VS = `
   }
 `;
 
-// Shaded fragment shader (simple directional light)
 const SHADED_FS = `
   precision mediump float;
   varying vec3 vNorm;
@@ -1170,14 +1362,18 @@ const SHADED_FS = `
       gl_FragColor = vec4(uColor, 1.0);
       return;
     }
-    vec3 light = normalize(vec3(0.4, 0.7, 0.5));
-    float d = max(dot(normalize(vNorm), light), 0.0);
-    vec3 c = uColor * (0.35 + 0.65 * d);
+    vec3 n = normalize(vNorm);
+    // Primary light from upper-right-front
+    vec3 light1 = normalize(vec3(0.5, 0.8, 0.4));
+    float d1 = max(dot(n, light1), 0.0);
+    // Fill light from left-below
+    vec3 light2 = normalize(vec3(-0.3, -0.2, 0.6));
+    float d2 = max(dot(n, light2), 0.0);
+    vec3 c = uColor * (0.25 + 0.55 * d1 + 0.20 * d2);
     gl_FragColor = vec4(c, 1.0);
   }
 `;
 
-// Flat vertex shader (for lines, wireframes, grid)
 const FLAT_VS = `
   attribute vec3 aPos;
   uniform mat4 uMVP;
@@ -1186,7 +1382,6 @@ const FLAT_VS = `
   }
 `;
 
-// Flat fragment shader (solid color with alpha)
 const FLAT_FS = `
   precision mediump float;
   uniform vec4 uColor;
@@ -1218,7 +1413,6 @@ function linkProgram(vs, fs) {
   return p;
 }
 
-// Build shader programs
 const shadedProg = linkProgram(
   compileShader(SHADED_VS, gl.VERTEX_SHADER),
   compileShader(SHADED_FS, gl.FRAGMENT_SHADER)
@@ -1244,26 +1438,27 @@ const fp = {
 
 /* ── Geometry Buffers ─────────────────────────────────────── */
 
-// Cube: 6 faces, 4 vertices each, interleaved pos+normal (stride=24 bytes)
+// Cube: smaller (0.5 half-size = 1m cube), interleaved pos+normal
+const S = 0.5;  // half-size
 const cubeVerts = new Float32Array([
   // Front face (+Z)
-  -0.5,-0.5, 0.5,  0, 0, 1,    0.5,-0.5, 0.5,  0, 0, 1,
-   0.5, 0.5, 0.5,  0, 0, 1,   -0.5, 0.5, 0.5,  0, 0, 1,
+  -S,-S, S,  0, 0, 1,    S,-S, S,  0, 0, 1,
+   S, S, S,  0, 0, 1,   -S, S, S,  0, 0, 1,
   // Back face (-Z)
-   0.5,-0.5,-0.5,  0, 0,-1,   -0.5,-0.5,-0.5,  0, 0,-1,
-  -0.5, 0.5,-0.5,  0, 0,-1,    0.5, 0.5,-0.5,  0, 0,-1,
+   S,-S,-S,  0, 0,-1,   -S,-S,-S,  0, 0,-1,
+  -S, S,-S,  0, 0,-1,    S, S,-S,  0, 0,-1,
   // Top face (+Y)
-  -0.5, 0.5, 0.5,  0, 1, 0,    0.5, 0.5, 0.5,  0, 1, 0,
-   0.5, 0.5,-0.5,  0, 1, 0,   -0.5, 0.5,-0.5,  0, 1, 0,
+  -S, S, S,  0, 1, 0,    S, S, S,  0, 1, 0,
+   S, S,-S,  0, 1, 0,   -S, S,-S,  0, 1, 0,
   // Bottom face (-Y)
-  -0.5,-0.5,-0.5,  0,-1, 0,    0.5,-0.5,-0.5,  0,-1, 0,
-   0.5,-0.5, 0.5,  0,-1, 0,   -0.5,-0.5, 0.5,  0,-1, 0,
+  -S,-S,-S,  0,-1, 0,    S,-S,-S,  0,-1, 0,
+   S,-S, S,  0,-1, 0,   -S,-S, S,  0,-1, 0,
   // Right face (+X)
-   0.5,-0.5, 0.5,  1, 0, 0,    0.5,-0.5,-0.5,  1, 0, 0,
-   0.5, 0.5,-0.5,  1, 0, 0,    0.5, 0.5, 0.5,  1, 0, 0,
+   S,-S, S,  1, 0, 0,    S,-S,-S,  1, 0, 0,
+   S, S,-S,  1, 0, 0,    S, S, S,  1, 0, 0,
   // Left face (-X)
-  -0.5,-0.5,-0.5, -1, 0, 0,   -0.5,-0.5, 0.5, -1, 0, 0,
-  -0.5, 0.5, 0.5, -1, 0, 0,   -0.5, 0.5,-0.5, -1, 0, 0,
+  -S,-S,-S, -1, 0, 0,   -S,-S, S, -1, 0, 0,
+  -S, S, S, -1, 0, 0,   -S, S,-S, -1, 0, 0,
 ]);
 const cubeIdx = new Uint16Array([
   0,1,2, 0,2,3,     4,5,6, 4,6,7,     8,9,10, 8,10,11,
@@ -1276,12 +1471,11 @@ const cubeIBO = gl.createBuffer();
 gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, cubeIBO);
 gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, cubeIdx, gl.STATIC_DRAW);
 
-// Cube wireframe: 12 edges as line pairs
-const h = 0.5;
+// Cube wireframe edges
 const wireVerts = new Float32Array([
-  -h,-h,-h, h,-h,-h,   h,-h,-h, h,h,-h,   h,h,-h, -h,h,-h,   -h,h,-h, -h,-h,-h,
-  -h,-h, h, h,-h, h,   h,-h, h, h,h, h,   h,h, h, -h,h, h,   -h,h, h, -h,-h, h,
-  -h,-h,-h, -h,-h,h,   h,-h,-h, h,-h,h,   h,h,-h, h,h,h,     -h,h,-h, -h,h,h
+  -S,-S,-S, S,-S,-S,   S,-S,-S, S,S,-S,   S,S,-S, -S,S,-S,   -S,S,-S, -S,-S,-S,
+  -S,-S, S, S,-S, S,   S,-S, S, S,S, S,   S,S, S, -S,S, S,   -S,S, S, -S,-S, S,
+  -S,-S,-S, -S,-S,S,   S,-S,-S, S,-S,S,   S,S,-S, S,S,S,     -S,S,-S, -S,S,S
 ]);
 const wireVBO = gl.createBuffer();
 gl.bindBuffer(gl.ARRAY_BUFFER, wireVBO);
@@ -1290,68 +1484,65 @@ gl.bufferData(gl.ARRAY_BUFFER, wireVerts, gl.STATIC_DRAW);
 // Grid floor: 20x20 lines at Y=0
 const gridLines = [];
 for (let i = -10; i <= 10; i++) {
-  gridLines.push(i, 0, -10, i, 0, 10);   // lines along Z
-  gridLines.push(-10, 0, i, 10, 0, i);    // lines along X
+  gridLines.push(i, 0, -10, i, 0, 10);
+  gridLines.push(-10, 0, i, 10, 0, i);
 }
 const gridVBO = gl.createBuffer();
 gl.bindBuffer(gl.ARRAY_BUFFER, gridVBO);
 gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(gridLines), gl.STATIC_DRAW);
 const gridVertCount = gridLines.length / 3;
 
-// Axis lines through origin
+// Axis lines (longer, more visible)
 const axisVerts = new Float32Array([
-  0,0,0, 4,0,0,    // X axis (red)
-  0,0,0, 0,4,0,    // Y axis (green)
-  0,0,0, 0,0,4     // Z axis (blue, for reference)
+  -10,0,0, 10,0,0,   // X axis (red)
+  0,0,-10, 0,0,10    // Y axis (green) -- in Blender, green axis is Y going into screen on floor
 ]);
 const axisVBO = gl.createBuffer();
 gl.bindBuffer(gl.ARRAY_BUFFER, axisVBO);
 gl.bufferData(gl.ARRAY_BUFFER, axisVerts, gl.STATIC_DRAW);
 
-// 3D Cursor (small crosshair at origin)
+// 3D Cursor
 const cursorVerts = new Float32Array([
-  -0.15,0,0, 0.15,0,0,
-  0,-0.15,0, 0,0.15,0,
-  0,0,-0.15, 0,0,0.15
+  -0.12,0,0, 0.12,0,0,
+  0,-0.12,0, 0,0.12,0,
+  0,0,-0.12, 0,0,0.12
 ]);
 const cursorVBO = gl.createBuffer();
 gl.bindBuffer(gl.ARRAY_BUFFER, cursorVBO);
 gl.bufferData(gl.ARRAY_BUFFER, cursorVerts, gl.STATIC_DRAW);
 
-// Camera wireframe at position (3.5, 2.5, 3.5)
+// Camera wireframe -- proper pyramid shape
 const camVerts = new Float32Array([
-  // Pyramid from origin to frustum
-  0,0,0, -0.4,-0.3,-0.7,   0,0,0, 0.4,-0.3,-0.7,
-  0,0,0,  0.4, 0.3,-0.7,   0,0,0,-0.4, 0.3,-0.7,
-  // Frustum rectangle
-  -0.4,-0.3,-0.7, 0.4,-0.3,-0.7,   0.4,-0.3,-0.7, 0.4,0.3,-0.7,
-   0.4, 0.3,-0.7,-0.4, 0.3,-0.7,  -0.4, 0.3,-0.7,-0.4,-0.3,-0.7,
+  // Pyramid: apex at 0,0,0 to rectangular base
+  0,0,0, -0.35,-0.25,-0.6,   0,0,0, 0.35,-0.25,-0.6,
+  0,0,0,  0.35, 0.25,-0.6,   0,0,0,-0.35, 0.25,-0.6,
+  // Rectangular base
+  -0.35,-0.25,-0.6, 0.35,-0.25,-0.6,   0.35,-0.25,-0.6, 0.35,0.25,-0.6,
+   0.35, 0.25,-0.6,-0.35, 0.25,-0.6,  -0.35, 0.25,-0.6,-0.35,-0.25,-0.6,
   // Up triangle indicator
-  -0.15,0.3,-0.7, 0,0.5,-0.7,   0,0.5,-0.7, 0.15,0.3,-0.7
+  -0.12,0.25,-0.6, 0,0.40,-0.6,   0,0.40,-0.6, 0.12,0.25,-0.6
 ]);
 const camVBO = gl.createBuffer();
 gl.bindBuffer(gl.ARRAY_BUFFER, camVBO);
 gl.bufferData(gl.ARRAY_BUFFER, camVerts, gl.STATIC_DRAW);
 const camVertCount = camVerts.length / 3;
 
-// Light wireframe (point light: two circles + rays)
+// Light wireframe (circles + rays)
 const lightPts = [];
-const circleSegs = 16;
+const circleSegs = 24;
 for (let i = 0; i < circleSegs; i++) {
   const a1 = (i / circleSegs) * Math.PI * 2;
   const a2 = ((i + 1) / circleSegs) * Math.PI * 2;
-  const r = 0.2;
-  // XY circle
+  const r = 0.15;
   lightPts.push(Math.cos(a1)*r, Math.sin(a1)*r, 0);
   lightPts.push(Math.cos(a2)*r, Math.sin(a2)*r, 0);
-  // YZ circle
   lightPts.push(0, Math.cos(a1)*r, Math.sin(a1)*r);
   lightPts.push(0, Math.cos(a2)*r, Math.sin(a2)*r);
 }
-// Small rays emanating from the light
-for (let i = 0; i < 6; i++) {
-  const a = (i / 6) * Math.PI * 2;
-  const r1 = 0.2, r2 = 0.35;
+// Dashed rays
+for (let i = 0; i < 8; i++) {
+  const a = (i / 8) * Math.PI * 2;
+  const r1 = 0.18, r2 = 0.30;
   lightPts.push(Math.cos(a)*r1, Math.sin(a)*r1, 0);
   lightPts.push(Math.cos(a)*r2, Math.sin(a)*r2, 0);
 }
@@ -1359,6 +1550,23 @@ const lightVBO = gl.createBuffer();
 gl.bindBuffer(gl.ARRAY_BUFFER, lightVBO);
 gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(lightPts), gl.STATIC_DRAW);
 const lightVertCount = lightPts.length / 3;
+
+// Light glow circle (larger, for the glow effect)
+const glowPts = [];
+const glowR = 0.08;
+const glowSegs = 16;
+for (let i = 0; i < glowSegs; i++) {
+  const a1 = (i / glowSegs) * Math.PI * 2;
+  const a2 = ((i + 1) / glowSegs) * Math.PI * 2;
+  // Triangle fan as triangles
+  glowPts.push(0, 0, 0);
+  glowPts.push(Math.cos(a1)*glowR, Math.sin(a1)*glowR, 0);
+  glowPts.push(Math.cos(a2)*glowR, Math.sin(a2)*glowR, 0);
+}
+const glowVBO = gl.createBuffer();
+gl.bindBuffer(gl.ARRAY_BUFFER, glowVBO);
+gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(glowPts), gl.STATIC_DRAW);
+const glowVertCount = glowPts.length / 3;
 
 /* ── Matrix Math Helpers ──────────────────────────────────── */
 
@@ -1447,14 +1655,15 @@ function drawLines(vbo, count, mvp, r, g, b, a) {
 
 /* ── Main Render Loop ─────────────────────────────────────── */
 
-let orbitAngle = 0.6;
+// STATIC camera -- Blender's default numpad view angle
+const camEye = [7.36, 4.96, -6.93];
+const camTarget = [0, 0, 0];
 
 function render() {
   resizeCanvas();
   const W = canvas.width, H = canvas.height;
   gl.viewport(0, 0, W, H);
 
-  // Clear with viewport background color #393939
   gl.clearColor(57/255, 57/255, 57/255, 1);
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
   gl.enable(gl.DEPTH_TEST);
@@ -1464,46 +1673,41 @@ function render() {
     state.frame++;
     if (state.frame > 250) state.frame = 1;
     syncFrame();
+    drawRuler();
   }
 
-  // Camera orbiting slowly
-  orbitAngle += 0.004;
-  const dist = 5.0;
-  const camX = Math.sin(orbitAngle) * dist * 0.8;
-  const camZ = Math.cos(orbitAngle) * dist * 0.8;
-  const camY = 3.0;
-
-  const proj = mat4Perspective(Math.PI / 4, W / H, 0.1, 100);
-  const view = mat4LookAt([camX, camY, camZ], [0, 0.3, 0], [0, 1, 0]);
+  const proj = mat4Perspective(Math.PI / 6, W / H, 0.1, 100);
+  const view = mat4LookAt(camEye, camTarget, [0, 1, 0]);
   const vp = mat4Multiply(proj, view);
 
-  // ── Draw Grid (with alpha blending) ──
+  // ── Draw Grid (very subtle) ──
   gl.enable(gl.BLEND);
   gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
-  drawLines(gridVBO, gridVertCount, vp, 84/255, 84/255, 84/255, 0.5);
-  gl.disable(gl.BLEND);
+  drawLines(gridVBO, gridVertCount, vp, 84/255, 84/255, 84/255, 0.15);
 
-  // ── Draw Axis Lines ──
+  // ── Draw Axis Lines (bright, on top of grid) ──
   gl.useProgram(flatProg);
   gl.uniformMatrix4fv(fp.uMVP, false, vp);
   gl.bindBuffer(gl.ARRAY_BUFFER, axisVBO);
   gl.enableVertexAttribArray(fp.aPos);
   gl.vertexAttribPointer(fp.aPos, 3, gl.FLOAT, false, 0, 0);
   // X axis - red
-  gl.uniform4f(fp.uColor, 0.8, 0.2, 0.2, 1);
+  gl.uniform4f(fp.uColor, 0.8, 0.2, 0.2, 0.9);
   gl.drawArrays(gl.LINES, 0, 2);
-  // Y axis - green
-  gl.uniform4f(fp.uColor, 0.2, 0.8, 0.2, 1);
+  // Z axis (Blender's Y on floor) - green
+  gl.uniform4f(fp.uColor, 0.2, 0.8, 0.2, 0.9);
   gl.drawArrays(gl.LINES, 2, 2);
 
-  // ── Draw Cube (solid shaded) ──
-  const cubeModel = mat4Translate(state.locX, state.locY, state.locZ);
+  gl.disable(gl.BLEND);
+
+  // ── Draw Cube (solid shaded, sitting on grid floor: center at Y=0.5) ──
+  const cubeModel = mat4Translate(state.locX, state.locY + S, state.locZ);
   const cubeMVP = mat4Multiply(vp, cubeModel);
 
   gl.useProgram(shadedProg);
   gl.uniformMatrix4fv(sp.uMVP, false, cubeMVP);
   gl.uniformMatrix4fv(sp.uModel, false, cubeModel);
-  gl.uniform3f(sp.uColor, 0.62, 0.60, 0.59);  // #9E9A96 warm gray
+  gl.uniform3f(sp.uColor, 0.65, 0.63, 0.62);
   gl.uniform1f(sp.uFlat, 0);
 
   gl.bindBuffer(gl.ARRAY_BUFFER, cubeVBO);
@@ -1515,10 +1719,10 @@ function render() {
   gl.drawElements(gl.TRIANGLES, 36, gl.UNSIGNED_SHORT, 0);
   gl.disableVertexAttribArray(sp.aNorm);
 
-  // ── Draw Cube Wireframe (orange selection overlay) ──
+  // ── Draw Cube Wireframe (orange selection) ──
   gl.useProgram(flatProg);
   gl.uniformMatrix4fv(fp.uMVP, false, cubeMVP);
-  gl.uniform4f(fp.uColor, 0.93, 0.60, 0.20, 1);  // #ED9A32 active object
+  gl.uniform4f(fp.uColor, 0.93, 0.60, 0.20, 1);
   gl.bindBuffer(gl.ARRAY_BUFFER, wireVBO);
   gl.enableVertexAttribArray(fp.aPos);
   gl.vertexAttribPointer(fp.aPos, 3, gl.FLOAT, false, 0, 0);
@@ -1526,24 +1730,38 @@ function render() {
   gl.drawArrays(gl.LINES, 0, 24);
   gl.depthFunc(gl.LESS);
 
-  // ── Draw 3D Cursor (small crosshair at origin) ──
+  // ── Draw 3D Cursor ──
   gl.uniformMatrix4fv(fp.uMVP, false, vp);
   gl.bindBuffer(gl.ARRAY_BUFFER, cursorVBO);
   gl.vertexAttribPointer(fp.aPos, 3, gl.FLOAT, false, 0, 0);
   gl.uniform4f(fp.uColor, 1.0, 0.2, 0.2, 1);
-  gl.drawArrays(gl.LINES, 0, 2);  // X
+  gl.drawArrays(gl.LINES, 0, 2);
   gl.uniform4f(fp.uColor, 0.2, 1.0, 0.2, 1);
-  gl.drawArrays(gl.LINES, 2, 2);  // Y
+  gl.drawArrays(gl.LINES, 2, 2);
   gl.uniform4f(fp.uColor, 0.3, 0.4, 1.0, 1);
-  gl.drawArrays(gl.LINES, 4, 2);  // Z
+  gl.drawArrays(gl.LINES, 4, 2);
 
-  // ── Draw Camera Wireframe ──
-  const camModelMat = mat4Translate(3.5, 2.5, 3.5);
-  drawLines(camVBO, camVertCount, mat4Multiply(vp, camModelMat), 0.6, 0.6, 0.6, 1);
+  // ── Draw Camera Wireframe (upper-left area) ──
+  const camModelMat = mat4Translate(7.48, 5.34, -6.51);
+  drawLines(camVBO, camVertCount, mat4Multiply(vp, camModelMat), 0.45, 0.45, 0.45, 1);
 
-  // ── Draw Light Wireframe ──
-  const lightModelMat = mat4Translate(-2, 3, 1.5);
-  drawLines(lightVBO, lightVertCount, mat4Multiply(vp, lightModelMat), 0.96, 0.84, 0.43, 1);
+  // ── Draw Light Wireframe (higher, to the right) ──
+  const lightModelMat = mat4Translate(4.08, 5.90, -1.0);
+  gl.enable(gl.BLEND);
+  // Glow circle behind light
+  gl.useProgram(flatProg);
+  const lightMVP = mat4Multiply(vp, lightModelMat);
+  gl.uniformMatrix4fv(fp.uMVP, false, lightMVP);
+  gl.uniform4f(fp.uColor, 0.96, 0.84, 0.43, 0.25);
+  gl.bindBuffer(gl.ARRAY_BUFFER, glowVBO);
+  gl.enableVertexAttribArray(fp.aPos);
+  gl.vertexAttribPointer(fp.aPos, 3, gl.FLOAT, false, 0, 0);
+  gl.depthFunc(gl.LEQUAL);
+  gl.drawArrays(gl.TRIANGLES, 0, glowVertCount);
+  gl.depthFunc(gl.LESS);
+  // Light wireframe lines
+  drawLines(lightVBO, lightVertCount, lightMVP, 0.96, 0.84, 0.43, 1);
+  gl.disable(gl.BLEND);
 
   requestAnimationFrame(render);
 }
@@ -1554,44 +1772,66 @@ const gizC = document.getElementById('gizmo-canvas');
 const gctx = gizC.getContext('2d');
 
 function drawGizmo() {
-  const s = 120, cx = s/2, cy = s/2, len = 28;
+  const s = 140, cx = s/2, cy = s/2, len = 32;
   gctx.clearRect(0, 0, s, s);
 
-  // Rotate axes with camera orbit
-  const ca = -orbitAngle;
-  const sa = Math.sin(ca);
-  const co = Math.cos(ca);
+  // Use camera view matrix to compute axis directions in screen space
+  const view = mat4LookAt(camEye, camTarget, [0, 1, 0]);
 
-  // X axis (red)
-  gctx.beginPath();
-  gctx.moveTo(cx, cy);
-  gctx.lineTo(cx + co * len, cy + sa * len * 0.4);
-  gctx.strokeStyle = '#CC3333';
-  gctx.lineWidth = 2;
-  gctx.stroke();
-  gctx.fillStyle = '#CC3333';
-  gctx.font = 'bold 11px Inter, sans-serif';
-  gctx.fillText('X', cx + co * (len + 6) - 3, cy + sa * (len + 6) * 0.4 + 4);
+  // Extract right, up, forward from view matrix
+  // View matrix rows give us camera axes in world space
+  // To project world X/Y/Z into screen, multiply by view rotation
+  function projectAxis(wx, wy, wz) {
+    // Apply view rotation (top-left 3x3)
+    const sx = view[0]*wx + view[4]*wy + view[8]*wz;
+    const sy = view[1]*wx + view[5]*wy + view[9]*wz;
+    const sz = view[2]*wx + view[6]*wy + view[10]*wz;
+    return { x: sx, y: -sy, z: sz }; // flip y for canvas coords
+  }
 
-  // Y axis (green) - always vertical
-  gctx.beginPath();
-  gctx.moveTo(cx, cy);
-  gctx.lineTo(cx, cy - len);
-  gctx.strokeStyle = '#33CC33';
-  gctx.lineWidth = 2;
-  gctx.stroke();
-  gctx.fillStyle = '#33CC33';
-  gctx.fillText('Y', cx - 3, cy - len - 4);
+  const xAxis = projectAxis(1, 0, 0);
+  const yAxis = projectAxis(0, 1, 0);
+  const zAxis = projectAxis(0, 0, 1);
 
-  // Z axis (blue)
+  // Sort by z for painter's algorithm (draw far first)
+  const axes = [
+    { dir: xAxis, color: '#CC3333', label: 'X', bg: '#CC3333' },
+    { dir: yAxis, color: '#33CC33', label: 'Y', bg: '#33CC33' },
+    { dir: zAxis, color: '#3366CC', label: 'Z', bg: '#3366CC' }
+  ];
+  axes.sort((a, b) => a.dir.z - b.dir.z);
+
+  // Draw background circle
   gctx.beginPath();
-  gctx.moveTo(cx, cy);
-  gctx.lineTo(cx - sa * len, cy + co * len * 0.4);
-  gctx.strokeStyle = '#3366CC';
-  gctx.lineWidth = 2;
-  gctx.stroke();
-  gctx.fillStyle = '#3366CC';
-  gctx.fillText('Z', cx - sa * (len + 6) - 3, cy + co * (len + 6) * 0.4 + 4);
+  gctx.arc(cx, cy, len + 8, 0, Math.PI * 2);
+  gctx.fillStyle = 'rgba(40,40,40,0.6)';
+  gctx.fill();
+
+  for (const axis of axes) {
+    const ex = cx + axis.dir.x * len;
+    const ey = cy + axis.dir.y * len;
+
+    // Line
+    gctx.beginPath();
+    gctx.moveTo(cx, cy);
+    gctx.lineTo(ex, ey);
+    gctx.strokeStyle = axis.color;
+    gctx.lineWidth = 2.5;
+    gctx.stroke();
+
+    // Endpoint circle
+    gctx.beginPath();
+    gctx.arc(ex, ey, 8, 0, Math.PI * 2);
+    gctx.fillStyle = axis.bg;
+    gctx.fill();
+
+    // Label
+    gctx.fillStyle = '#FFF';
+    gctx.font = 'bold 9px Inter, sans-serif';
+    gctx.textAlign = 'center';
+    gctx.textBaseline = 'middle';
+    gctx.fillText(axis.label, ex, ey);
+  }
 
   // Center dot
   gctx.beginPath();
