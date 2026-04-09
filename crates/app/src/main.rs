@@ -242,10 +242,19 @@ impl SceneObject {
 
     fn icon(&self) -> &'static str {
         match self.obj_type {
-            "Mesh" => "\u{1F536}",   // orange diamond
-            "Camera" => "\u{1F4F7}", // camera
-            "Light" => "\u{1F4A1}",  // light bulb
+            "Mesh" => "\u{25B2}",    // triangle for mesh
+            "Camera" => "\u{25C6}",  // diamond for camera
+            "Light" => "\u{25CF}",   // filled circle for light
             _ => "\u{25CF}",
+        }
+    }
+
+    fn icon_color(&self) -> Color32 {
+        match self.obj_type {
+            "Mesh" => Color32::from_rgb(237, 154, 50),    // orange
+            "Camera" => Color32::from_rgb(140, 140, 140), // gray
+            "Light" => Color32::from_rgb(220, 200, 70),   // yellow
+            _ => Color32::from_rgb(180, 180, 180),
         }
     }
 }
@@ -620,11 +629,11 @@ impl App {
             .frame(Frame::NONE.fill(Color32::from_rgb(42, 42, 42)))
             .show(ctx, |ui| {
                 ui.horizontal_centered(|ui| {
-                    ui.spacing_mut().item_spacing.x = 2.0;
+                    ui.spacing_mut().item_spacing.x = 8.0;
 
-                    // Logo
+                    // Logo placeholder circle + name
                     ui.label(
-                        egui::RichText::new("Forge3D")
+                        egui::RichText::new("\u{25CF} Forge3D")
                             .strong()
                             .color(Color32::from_rgb(200, 200, 200))
                             .size(13.0),
@@ -678,11 +687,15 @@ impl App {
                             });
                         let btn = egui::Button::new(label)
                             .fill(if is_active {
-                                Color32::from_rgb(58, 58, 58)
+                                Color32::from_rgb(80, 80, 80)
                             } else {
                                 Color32::TRANSPARENT
                             })
-                            .stroke(Stroke::NONE);
+                            .stroke(if is_active {
+                                Stroke::new(0.5, Color32::from_rgb(100, 100, 100))
+                            } else {
+                                Stroke::NONE
+                            });
                         if ui.add(btn).clicked() {
                             self.workspace = i;
                         }
@@ -708,41 +721,88 @@ impl App {
     // -- #5: Status bar (very bottom) --
     fn draw_statusbar(&self, ctx: &egui::Context) {
         egui::TopBottomPanel::bottom("statusbar")
-            .exact_height(22.0)
+            .exact_height(20.0)
             .frame(Frame::NONE.fill(Color32::from_rgb(42, 42, 42)))
             .show(ctx, |ui| {
+                // Subtle separator line above status bar
+                {
+                    let r = ui.available_rect_before_wrap();
+                    ui.painter().line_segment(
+                        [egui::pos2(r.left(), r.top()), egui::pos2(r.right(), r.top())],
+                        Stroke::new(0.5, Color32::from_rgb(30, 30, 30)),
+                    );
+                }
                 ui.horizontal_centered(|ui| {
                     ui.label(
-                        egui::RichText::new("Object Mode")
+                        egui::RichText::new("\u{25CF} Object Mode")
                             .color(Color32::from_rgb(180, 180, 180))
-                            .size(11.0),
+                            .size(10.0),
                     );
                     ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                         ui.label(
                             egui::RichText::new("Verts:8  Faces:6  Tris:12 | Blender C++\u{2192}Rust conversion")
                                 .color(Color32::from_rgb(140, 140, 140))
-                                .size(11.0),
+                                .size(10.0),
                         );
                     });
                 });
             });
     }
 
-    // -- #4: Timeline (thin, 32px) --
+    // -- #4: Timeline (thin, 36px with tick ruler) --
     fn draw_timeline(&mut self, ctx: &egui::Context) {
         egui::TopBottomPanel::bottom("timeline")
-            .exact_height(32.0)
+            .exact_height(36.0)
             .frame(Frame::NONE.fill(Color32::from_rgb(42, 42, 42)))
             .show(ctx, |ui| {
+                // Top: frame ruler tick marks
+                {
+                    let ruler_rect = ui.available_rect_before_wrap();
+                    let ruler_rect = egui::Rect::from_min_size(ruler_rect.min, egui::vec2(ruler_rect.width(), 6.0));
+                    let painter = ui.painter();
+                    painter.line_segment(
+                        [ruler_rect.left_bottom(), ruler_rect.right_bottom()],
+                        Stroke::new(0.5, Color32::from_rgb(60, 60, 60)),
+                    );
+                    // Tick marks every ~20 frames
+                    let total_frames = (self.end_frame - self.start_frame).max(1) as f32;
+                    let tick_spacing = 10;
+                    for f in (self.start_frame..=self.end_frame).step_by(tick_spacing as usize) {
+                        let t = (f - self.start_frame) as f32 / total_frames;
+                        let x = ruler_rect.left() + t * ruler_rect.width();
+                        let is_major = f % 50 == 0;
+                        let h = if is_major { 5.0 } else { 3.0 };
+                        painter.line_segment(
+                            [egui::pos2(x, ruler_rect.bottom() - h), egui::pos2(x, ruler_rect.bottom())],
+                            Stroke::new(0.5, Color32::from_rgb(80, 80, 80)),
+                        );
+                    }
+                    // Current frame indicator
+                    let ct = (self.current_frame - self.start_frame) as f32 / total_frames;
+                    let cx = ruler_rect.left() + ct * ruler_rect.width();
+                    painter.line_segment(
+                        [egui::pos2(cx, ruler_rect.top()), egui::pos2(cx, ruler_rect.bottom())],
+                        Stroke::new(1.5, Color32::from_rgb(71, 114, 179)),
+                    );
+                }
+                ui.add_space(2.0);
+
                 ui.horizontal_centered(|ui| {
                     ui.spacing_mut().item_spacing.x = 2.0;
 
-                    // Left: editor type label
-                    ui.label(
-                        egui::RichText::new("Dope Sheet")
+                    // Left: editor type labels like Blender
+                    let label_style = |t: &str| {
+                        egui::RichText::new(t)
                             .color(Color32::from_rgb(180, 180, 180))
-                            .size(11.0),
-                    );
+                            .size(10.0)
+                    };
+                    ui.label(label_style("Dope Sheet"));
+                    ui.label(egui::RichText::new("|").color(Color32::from_rgb(80, 80, 80)).size(10.0));
+                    ui.label(label_style("Marker"));
+                    ui.label(egui::RichText::new("|").color(Color32::from_rgb(80, 80, 80)).size(10.0));
+                    ui.label(label_style("Playback"));
+
+                    ui.add_space(8.0);
                     ui.separator();
 
                     // Transport buttons
@@ -778,7 +838,7 @@ impl App {
                     ui.label(
                         egui::RichText::new(format!("{} / {}", self.start_frame, self.end_frame))
                             .color(Color32::from_rgb(140, 140, 140))
-                            .size(11.0),
+                            .size(10.0),
                     );
                 });
             });
@@ -836,6 +896,24 @@ impl App {
                 });
                 ui.separator();
 
+                // Search bar at top of outliner
+                ui.horizontal(|ui| {
+                    ui.add_space(4.0);
+                    ui.label(
+                        egui::RichText::new("\u{1F50D}")
+                            .color(Color32::from_rgb(140, 140, 140))
+                            .size(11.0),
+                    );
+                    let mut search_text = String::new();
+                    ui.add(
+                        egui::TextEdit::singleline(&mut search_text)
+                            .desired_width(ui.available_width() - 8.0)
+                            .hint_text("Filter...")
+                            .font(FontId::proportional(11.0)),
+                    );
+                });
+                ui.add_space(2.0);
+
                 // Outliner body
                 egui::CollapsingHeader::new(
                         egui::RichText::new("Scene Collection")
@@ -845,11 +923,26 @@ impl App {
                     .show(ui, |ui| {
                         let mut new_selected = self.selected;
                         for (i, obj) in self.objects.iter().enumerate() {
+                            // Alternating row background
+                            let row_rect = ui.available_rect_before_wrap();
+                            let row_rect = egui::Rect::from_min_size(
+                                row_rect.min,
+                                egui::vec2(ui.available_width(), 20.0),
+                            );
+                            if i % 2 == 1 {
+                                ui.painter().rect_filled(row_rect, 0.0, Color32::from_rgb(45, 45, 45));
+                            }
+
                             ui.horizontal(|ui| {
-                                let label_text = format!("{} {}", obj.icon(), obj.name);
+                                // Colored icon
+                                ui.label(
+                                    egui::RichText::new(obj.icon())
+                                        .color(obj.icon_color())
+                                        .size(12.0),
+                                );
                                 let response = ui.selectable_label(
                                     self.selected == i,
-                                    egui::RichText::new(&label_text)
+                                    egui::RichText::new(&obj.name)
                                         .color(if self.selected == i {
                                             Color32::WHITE
                                         } else {
@@ -862,17 +955,17 @@ impl App {
 
                                 // Visibility / render toggles on the right
                                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                                    let vis_label = if obj.visible { "\u{1F441}" } else { "\u{1F441}\u{200D}\u{1F5E8}" };
+                                    let vis_icon = if obj.visible { "\u{25C9}" } else { "\u{25CB}" };
                                     ui.label(
-                                        egui::RichText::new(vis_label)
+                                        egui::RichText::new(vis_icon)
                                             .color(Color32::from_rgb(160, 160, 160))
-                                            .size(11.0),
+                                            .size(12.0),
                                     );
-                                    let cam_label = if obj.renderable { "\u{1F4F7}" } else { " " };
+                                    let cam_icon = if obj.renderable { "\u{25C6}" } else { "\u{25C7}" };
                                     ui.label(
-                                        egui::RichText::new(cam_label)
+                                        egui::RichText::new(cam_icon)
                                             .color(Color32::from_rgb(160, 160, 160))
-                                            .size(11.0),
+                                            .size(12.0),
                                     );
                                 });
                             });
@@ -885,42 +978,47 @@ impl App {
 
                 // #2: Properties section with vertical tab bar on the left
                 ui.horizontal(|ui| {
-                    // Vertical tab strip
+                    // Vertical tab strip with round colored circles
                     ui.vertical(|ui| {
                         ui.set_width(28.0);
-                        ui.spacing_mut().item_spacing.y = 1.0;
-                        for (i, icon) in PROP_TAB_ICONS.iter().enumerate() {
+                        ui.spacing_mut().item_spacing.y = 2.0;
+                        let tab_colors: [Color32; 9] = [
+                            Color32::WHITE,                      // T - Tool
+                            Color32::from_rgb(160, 160, 160),    // S - Scene
+                            Color32::from_rgb(180, 80, 80),      // W - World (red-ish)
+                            Color32::from_rgb(237, 154, 50),     // O - Object (orange)
+                            Color32::from_rgb(70, 130, 220),     // M - Modifiers (blue)
+                            Color32::from_rgb(120, 180, 220),    // P - Particles (light blue)
+                            Color32::from_rgb(120, 180, 220),    // Ph - Physics (light blue)
+                            Color32::from_rgb(200, 180, 50),     // C - Constraints (yellow)
+                            Color32::from_rgb(80, 200, 80),      // D - Data (green)
+                        ];
+                        for (i, _icon) in PROP_TAB_ICONS.iter().enumerate() {
                             let is_active = self.active_prop_tab == i;
-                            let color = match i {
-                                0 => Color32::WHITE,                      // T - Tool
-                                1 => Color32::from_rgb(160, 160, 160),    // S - Scene
-                                2 => Color32::from_rgb(180, 80, 80),      // W - World (red-ish)
-                                3 => Color32::from_rgb(237, 154, 50),     // O - Object (orange)
-                                4 => Color32::from_rgb(70, 130, 220),     // M - Modifiers (blue)
-                                5 => Color32::from_rgb(120, 180, 220),    // P - Particles (light blue)
-                                6 => Color32::from_rgb(120, 180, 220),    // Ph - Physics (light blue)
-                                7 => Color32::from_rgb(200, 180, 50),     // C - Constraints (yellow)
-                                8 => Color32::from_rgb(80, 200, 80),      // D - Data (green)
-                                _ => Color32::from_rgb(180, 180, 180),
-                            };
-                            let label = egui::RichText::new(*icon)
-                                .size(11.0)
-                                .color(color);
-                            let btn = egui::Button::new(label)
-                                .min_size(egui::vec2(26.0, 22.0))
-                                .fill(if is_active {
-                                    Color32::from_rgb(60, 60, 60)
-                                } else {
-                                    Color32::TRANSPARENT
-                                })
-                                .stroke(Stroke::NONE);
-                            if ui.add(btn).clicked() {
+                            let color = tab_colors[i.min(8)];
+                            // Paint a round filled circle as icon
+                            let (response, painter) = ui.allocate_painter(egui::vec2(26.0, 22.0), egui::Sense::click());
+                            let c = response.rect.center();
+                            if is_active {
+                                // Active tab highlight background
+                                painter.rect_filled(response.rect, 3.0, Color32::from_rgb(60, 60, 60));
+                            }
+                            painter.circle_filled(c, 6.0, color);
+                            if response.clicked() {
                                 self.active_prop_tab = i;
                             }
                         }
                     });
 
-                    ui.separator();
+                    // 1px separator line between tab strip and content
+                    {
+                        let remaining = ui.available_rect_before_wrap();
+                        ui.painter().line_segment(
+                            [egui::pos2(remaining.left(), remaining.top()), egui::pos2(remaining.left(), remaining.bottom())],
+                            Stroke::new(1.0, Color32::from_rgb(30, 30, 30)),
+                        );
+                    }
+                    ui.add_space(2.0);
 
                     // Properties content
                     ui.vertical(|ui| {
@@ -999,11 +1097,11 @@ impl App {
     // -- #7: Viewport header bar --
     fn draw_viewport_header(ui: &mut egui::Ui, active_shading: &mut usize) {
         ui.horizontal(|ui| {
-            ui.spacing_mut().item_spacing.x = 4.0;
+            ui.spacing_mut().item_spacing.x = 6.0;
 
             // Left: Object Mode menu
             ui.menu_button(
-                egui::RichText::new("Object Mode \u{25BC}")
+                egui::RichText::new("\u{25CE} Object Mode \u{25BC}")
                     .color(Color32::from_rgb(200, 200, 200))
                     .size(11.0),
                 |ui| {
@@ -1015,10 +1113,13 @@ impl App {
 
             ui.separator();
 
-            // Pivot, snap, proportional icons
-            ui.label(egui::RichText::new("\u{2316}").color(Color32::from_rgb(180, 180, 180)).size(12.0)); // pivot
-            ui.label(egui::RichText::new("\u{25C7}").color(Color32::from_rgb(180, 180, 180)).size(12.0)); // snap
-            ui.label(egui::RichText::new("\u{25CE}").color(Color32::from_rgb(180, 180, 180)).size(12.0)); // proportional
+            // Pivot, snap, proportional icons with more spacing
+            ui.add_space(4.0);
+            ui.label(egui::RichText::new("\u{2316}").color(Color32::from_rgb(180, 180, 180)).size(13.0)); // pivot
+            ui.add_space(2.0);
+            ui.label(egui::RichText::new("\u{25C7}").color(Color32::from_rgb(180, 180, 180)).size(13.0)); // snap
+            ui.add_space(2.0);
+            ui.label(egui::RichText::new("\u{25CE}").color(Color32::from_rgb(180, 180, 180)).size(13.0)); // proportional
 
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                 // X-Ray toggle
@@ -1038,28 +1139,44 @@ impl App {
 
                 ui.separator();
 
-                // Shading mode circles
-                let shading_icons = [
-                    ("\u{25CB}", "Wireframe"),
-                    ("\u{25CE}", "Solid"),
-                    ("\u{25C9}", "Material"),
-                    ("\u{25CF}", "Rendered"),
-                ];
-                for (i, (icon, _name)) in shading_icons.iter().enumerate().rev() {
+                // Shading mode circles — painted as actual filled/stroke circles
+                let shading_names = ["Wireframe", "Solid", "Material", "Rendered"];
+                for i in (0..4).rev() {
                     let is_active = *active_shading == i;
+                    // Reserve space for a clickable area
+                    let (response, painter) = ui.allocate_painter(egui::vec2(20.0, 20.0), egui::Sense::click());
+                    let center = response.rect.center();
+                    let r = 6.0;
                     let color = if is_active {
                         Color32::WHITE
                     } else {
                         Color32::from_rgb(140, 140, 140)
                     };
-                    let btn = egui::Button::new(
-                        egui::RichText::new(*icon).color(color).size(14.0),
-                    )
-                    .fill(Color32::TRANSPARENT)
-                    .stroke(Stroke::NONE);
-                    if ui.add(btn).clicked() {
+                    match i {
+                        0 => {
+                            // Wireframe: empty circle
+                            painter.circle_stroke(center, r, Stroke::new(1.5, color));
+                        }
+                        1 => {
+                            // Solid: circle with dot
+                            painter.circle_stroke(center, r, Stroke::new(1.5, color));
+                            painter.circle_filled(center, 2.5, color);
+                        }
+                        2 => {
+                            // Material: half-filled look
+                            painter.circle_stroke(center, r, Stroke::new(1.5, color));
+                            painter.circle_filled(center, 4.0, color);
+                        }
+                        3 => {
+                            // Rendered: filled circle
+                            painter.circle_filled(center, r, color);
+                        }
+                        _ => {}
+                    }
+                    if response.clicked() {
                         *active_shading = i;
                     }
+                    let _ = shading_names; // suppress warning
                 }
             });
         });
@@ -1068,7 +1185,7 @@ impl App {
     // -- 3D Viewport --
     fn draw_viewport(&mut self, ctx: &egui::Context) {
         egui::CentralPanel::default()
-            .frame(Frame::NONE.fill(Color32::from_rgb(51, 51, 51)))
+            .frame(Frame::NONE.fill(Color32::from_rgb(57, 57, 57)))
             .show(ctx, |ui| {
                 // #7: Viewport header bar
                 Self::draw_viewport_header(ui, &mut self.active_shading);
@@ -1089,6 +1206,45 @@ impl App {
                     CubeCallback { mvp },
                 );
                 ui.painter().add(cb);
+
+                // Orange wireframe overlay on cube (selected object highlight)
+                // Project approximate cube edges onto screen space using the MVP
+                {
+                    let painter = ui.painter();
+                    let project = |pos: [f32; 3]| -> Option<egui::Pos2> {
+                        let v = [pos[0], pos[1], pos[2], 1.0];
+                        let mut clip = [0.0f32; 4];
+                        for i in 0..4 {
+                            clip[i] = mvp[0 * 4 + i] * v[0]
+                                + mvp[1 * 4 + i] * v[1]
+                                + mvp[2 * 4 + i] * v[2]
+                                + mvp[3 * 4 + i] * v[3];
+                        }
+                        if clip[3].abs() < 0.001 { return None; }
+                        let ndc_x = clip[0] / clip[3];
+                        let ndc_y = clip[1] / clip[3];
+                        let screen_x = rect.left() + (ndc_x + 1.0) * 0.5 * rect.width();
+                        let screen_y = rect.top() + (1.0 - ndc_y) * 0.5 * rect.height();
+                        Some(egui::pos2(screen_x, screen_y))
+                    };
+                    let verts: [[f32; 3]; 8] = [
+                        [-0.5, -0.5,  0.5], [ 0.5, -0.5,  0.5],
+                        [ 0.5,  0.5,  0.5], [-0.5,  0.5,  0.5],
+                        [-0.5, -0.5, -0.5], [ 0.5, -0.5, -0.5],
+                        [ 0.5,  0.5, -0.5], [-0.5,  0.5, -0.5],
+                    ];
+                    let edges: [(usize, usize); 12] = [
+                        (0,1),(1,2),(2,3),(3,0), // front
+                        (4,5),(5,6),(6,7),(7,4), // back
+                        (0,4),(1,5),(2,6),(3,7), // connecting
+                    ];
+                    let edge_color = Color32::from_rgb(237, 154, 50); // Blender orange selection
+                    for (a, b) in &edges {
+                        if let (Some(pa), Some(pb)) = (project(verts[*a]), project(verts[*b])) {
+                            painter.line_segment([pa, pb], Stroke::new(1.5, edge_color));
+                        }
+                    }
+                }
 
                 // #9: Grid overlay with perspective-like alpha fade
                 let painter = ui.painter();
@@ -1191,18 +1347,18 @@ impl App {
                     idx += 1.0;
                 }
 
-                // Colored axis lines: X = bright red, Y = bright green
+                // Colored axis lines: X = bright red, Y = bright green (Blender #CC3333 / #33CC33)
                 painter.line_segment(
                     [egui::pos2(rect.left(), center.y), egui::pos2(rect.right(), center.y)],
-                    Stroke::new(1.5, Color32::from_rgb(180, 60, 60)),
+                    Stroke::new(1.5, Color32::from_rgb(204, 51, 51)),
                 );
                 painter.line_segment(
                     [egui::pos2(center.x, rect.top()), egui::pos2(center.x, rect.bottom())],
-                    Stroke::new(1.5, Color32::from_rgb(60, 180, 60)),
+                    Stroke::new(1.5, Color32::from_rgb(51, 204, 51)),
                 );
 
-                // 3D cursor: crosshair at center
-                let cursor_size = 6.0;
+                // 3D cursor: crosshair at center (bigger, 20px arms like Blender)
+                let cursor_size = 20.0;
                 painter.line_segment(
                     [egui::pos2(center.x - cursor_size, center.y), egui::pos2(center.x + cursor_size, center.y)],
                     Stroke::new(1.5, Color32::from_rgb(255, 50, 50)),
@@ -1211,34 +1367,38 @@ impl App {
                     [egui::pos2(center.x, center.y - cursor_size), egui::pos2(center.x, center.y + cursor_size)],
                     Stroke::new(1.5, Color32::from_rgb(255, 50, 50)),
                 );
-                painter.circle_stroke(center, 4.0, Stroke::new(1.0, Color32::WHITE));
+                painter.circle_stroke(center, 8.0, Stroke::new(1.5, Color32::WHITE));
 
-                // Camera wireframe indicator
-                let cam_pos = egui::pos2(center.x - 100.0, center.y - 30.0);
-                let cam_color = Color32::from_rgb(100, 100, 100);
-                // Small pyramid shape for camera
-                painter.line_segment([egui::pos2(cam_pos.x, cam_pos.y - 6.0), egui::pos2(cam_pos.x - 8.0, cam_pos.y + 6.0)], Stroke::new(1.0, cam_color));
-                painter.line_segment([egui::pos2(cam_pos.x, cam_pos.y - 6.0), egui::pos2(cam_pos.x + 8.0, cam_pos.y + 6.0)], Stroke::new(1.0, cam_color));
-                painter.line_segment([egui::pos2(cam_pos.x - 8.0, cam_pos.y + 6.0), egui::pos2(cam_pos.x + 8.0, cam_pos.y + 6.0)], Stroke::new(1.0, cam_color));
-                // Small triangle on top (viewfinder)
-                painter.line_segment([egui::pos2(cam_pos.x - 3.0, cam_pos.y - 6.0), egui::pos2(cam_pos.x, cam_pos.y - 10.0)], Stroke::new(1.0, cam_color));
-                painter.line_segment([egui::pos2(cam_pos.x + 3.0, cam_pos.y - 6.0), egui::pos2(cam_pos.x, cam_pos.y - 10.0)], Stroke::new(1.0, cam_color));
+                // Camera wireframe indicator (1.5x bigger)
+                let cam_pos = egui::pos2(center.x - 120.0, center.y - 40.0);
+                let cam_color = Color32::from_rgb(120, 120, 120);
+                // Pyramid shape for camera (scaled 1.5x)
+                painter.line_segment([egui::pos2(cam_pos.x, cam_pos.y - 9.0), egui::pos2(cam_pos.x - 12.0, cam_pos.y + 9.0)], Stroke::new(1.2, cam_color));
+                painter.line_segment([egui::pos2(cam_pos.x, cam_pos.y - 9.0), egui::pos2(cam_pos.x + 12.0, cam_pos.y + 9.0)], Stroke::new(1.2, cam_color));
+                painter.line_segment([egui::pos2(cam_pos.x - 12.0, cam_pos.y + 9.0), egui::pos2(cam_pos.x + 12.0, cam_pos.y + 9.0)], Stroke::new(1.2, cam_color));
+                // Triangle on top (viewfinder) scaled
+                painter.line_segment([egui::pos2(cam_pos.x - 4.5, cam_pos.y - 9.0), egui::pos2(cam_pos.x, cam_pos.y - 15.0)], Stroke::new(1.2, cam_color));
+                painter.line_segment([egui::pos2(cam_pos.x + 4.5, cam_pos.y - 9.0), egui::pos2(cam_pos.x, cam_pos.y - 15.0)], Stroke::new(1.2, cam_color));
+                // Bottom edge of camera body
+                painter.line_segment([egui::pos2(cam_pos.x - 12.0, cam_pos.y + 9.0), egui::pos2(cam_pos.x - 12.0, cam_pos.y - 9.0)], Stroke::new(1.2, cam_color));
+                painter.line_segment([egui::pos2(cam_pos.x + 12.0, cam_pos.y + 9.0), egui::pos2(cam_pos.x + 12.0, cam_pos.y - 9.0)], Stroke::new(1.2, cam_color));
+                painter.line_segment([egui::pos2(cam_pos.x - 12.0, cam_pos.y - 9.0), egui::pos2(cam_pos.x + 12.0, cam_pos.y - 9.0)], Stroke::new(1.2, cam_color));
 
-                // Light indicator (dot/circle)
+                // Light indicator (dot/circle with longer rays)
                 let light_pos = egui::pos2(center.x + 50.0, center.y - 80.0);
-                painter.circle_filled(light_pos, 3.0, Color32::from_rgb(200, 180, 60));
-                painter.circle_stroke(light_pos, 6.0, Stroke::new(0.8, Color32::from_rgb(200, 180, 60)));
-                // Small rays
+                painter.circle_filled(light_pos, 4.0, Color32::from_rgb(220, 200, 70));
+                painter.circle_stroke(light_pos, 8.0, Stroke::new(1.0, Color32::from_rgb(220, 200, 70)));
+                // Longer radiating rays
                 for angle_deg in [0.0_f32, 45.0, 90.0, 135.0, 180.0, 225.0, 270.0, 315.0] {
                     let angle = angle_deg.to_radians();
-                    let inner = 8.0;
-                    let outer = 11.0;
+                    let inner = 10.0;
+                    let outer = 16.0;
                     painter.line_segment(
                         [
                             egui::pos2(light_pos.x + angle.cos() * inner, light_pos.y + angle.sin() * inner),
                             egui::pos2(light_pos.x + angle.cos() * outer, light_pos.y + angle.sin() * outer),
                         ],
-                        Stroke::new(0.6, Color32::from_rgb(200, 180, 60)),
+                        Stroke::new(0.8, Color32::from_rgb(220, 200, 70)),
                     );
                 }
 
