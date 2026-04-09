@@ -52,12 +52,18 @@ wgpu = "24"
 winit = "0.30"
 raw-window-handle = "0.6"
 
+# UI
+egui = "0.31"
+egui-wgpu = "0.31"
+egui-winit = "0.31"
+
 # Python
 pyo3 = { version = "0.23", features = ["auto-initialize"] }
 
 # Parallelism
 rayon = "1"
 crossbeam = "0.8"
+pollster = "0.4"
 parking_lot = "0.12"
 
 # Utilities
